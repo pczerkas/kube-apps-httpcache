@@ -229,7 +229,7 @@ $ kubectl create rolebinding kube-apps-httpcache --clusterrole=kube-apps-httpcac
         spec:
           containers:
           - name: cache
-            image: quay.io/pczerkas/kube-apps-httpcache:stable
+            image: ghcr.io/pczerkas/kube-apps-httpcache:stable
             imagePullPolicy: Always
             args:
             - -admin-addr=0.0.0.0

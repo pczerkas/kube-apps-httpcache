@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/pczerkas/kube-apps-httpcache
+  repository: ghcr.io/pczerkas/kube-apps-httpcache
   pullPolicy: IfNotPresent
   tag: "stable"
 

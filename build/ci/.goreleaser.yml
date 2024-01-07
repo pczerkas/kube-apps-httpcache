@@ -28,11 +28,11 @@ changelog:
 dockers:
   -
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:latest-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:stable-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:latest-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:stable-amd64
     use: buildx
     dockerfile: build/package/docker/GoReleaser.Dockerfile
     build_flag_templates:
@@ -45,11 +45,11 @@ dockers:
     goarm: ''
   -
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:latest-arm64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-arm64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-arm64
-      - quay.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-arm64
-      - quay.io/pczerkas/kube-apps-httpcache:stable-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:latest-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:stable-arm64
     use: buildx
     dockerfile: build/package/docker/GoReleaser.Dockerfile
     build_flag_templates:
@@ -61,23 +61,23 @@ dockers:
     goarch: arm64
     goarm: ''
 docker_manifests:
-  - name_template: quay.io/pczerkas/kube-apps-httpcache:latest
+  - name_template: ghcr.io/pczerkas/kube-apps-httpcache:latest
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:latest-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:latest-arm64
-  - name_template: quay.io/pczerkas/kube-apps-httpcache:stable
+      - ghcr.io/pczerkas/kube-apps-httpcache:latest-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:latest-arm64
+  - name_template: ghcr.io/pczerkas/kube-apps-httpcache:stable
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:stable-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:stable-arm64
-  - name_template: quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}
+      - ghcr.io/pczerkas/kube-apps-httpcache:stable-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:stable-arm64
+  - name_template: ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-arm64
-  - name_template: quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}-arm64
+  - name_template: ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-arm64
-  - name_template: quay.io/pczerkas/kube-apps-httpcache:{{ .Tag }}
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:v{{ .Major }}.{{ .Minor }}-arm64
+  - name_template: ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}
     image_templates:
-      - quay.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-amd64
-      - quay.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-arm64
+      - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-amd64
+      - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-arm64

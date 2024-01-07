@@ -1,5 +1,5 @@
 image:
-  repository: quay.io/pczerkas/kube-apps-httpcache
+  repository: ghcr.io/pczerkas/kube-apps-httpcache
   pullPolicy: Never
   tag: "dev"
 

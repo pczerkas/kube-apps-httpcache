@@ -7,8 +7,8 @@ This guide explains how to build the kube-apps-httpcache Docker image locally an
 1. Build image and load into kind:
 
     ```
-    $ docker build -t quay.io/pczerkas/kube-apps-httpcache:dev -f build/packages/docker/Dockerfile .
-    $ kind load docker-image quay.io/pczerkas/kube-apps-httpcache:dev
+    $ docker build -t ghcr.io/pczerkas/kube-apps-httpcache:dev -f build/packages/docker/Dockerfile .
+    $ kind load docker-image ghcr.io/pczerkas/kube-apps-httpcache:dev
     ```
 
 2. Deploy an example backend workload:
