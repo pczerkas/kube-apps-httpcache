@@ -1,5 +1,5 @@
 ARG ARCH=
-FROM        ${ARCH}debian:bullseye-slim
+FROM        ${ARCH}debian:bookworm-slim
 
 ENV         EXPORTER_VERSION=1.6.1
 LABEL       MAINTAINER="Przemek Czerkas <pczerkas@gmail.com>"

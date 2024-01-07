@@ -1,4 +1,4 @@
-FROM        golang:1.20 AS builder
+FROM        golang:1.21 AS builder
 
 WORKDIR     /workspace
 COPY        . .
@@ -8,7 +8,7 @@ RUN         CGO_ENABLED=0 GOOS=linux \
                 -o kube-apps-httpcache \
                 -a cmd/kube-apps-httpcache/main.go
 
-FROM        debian:bullseye-slim AS final
+FROM        debian:bookworm-slim AS final
 
 ENV         EXPORTER_VERSION=1.6.1
 LABEL       MAINTAINER="Przemek Czerkas <pczerkas@gmail.com>"
