@@ -3,7 +3,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "kube-httpcache.fullname" . }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
 rules:
 - apiGroups:
   - ""
@@ -36,13 +36,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    {{- include "kube-httpcache.labels" . | nindent 4 }}
-  name: {{ include "kube-httpcache.fullname" . }}
+    {{- include "kube-apps-httpcache.labels" . | nindent 4 }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "kube-httpcache.fullname" . }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "kube-httpcache.serviceAccountName" . }}
+    name: {{ include "kube-apps-httpcache.serviceAccountName" . }}
 {{- end }}

@@ -22,7 +22,7 @@ A clear and concise description of what you expected to happen.
 
 **Environment:**
  - Kubernetes version: [e.g. 1.18]
- - kube-httpcache version: [e.g. v0.2.2]
+ - kube-apps-httpcache version: [e.g. v0.2.2]
 
 **Configuration**
 If applicable, add your VCL configuration file and other relevant configuration settings

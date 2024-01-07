@@ -1,6 +1,7 @@
 /.idea
+/.vscode
 /vendor
-/kube-httpcache
+/kube-apps-httpcache
 dist
 *.vcl
 *.vcl.tmpl

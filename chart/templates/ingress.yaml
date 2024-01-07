@@ -13,9 +13,9 @@ apiVersion: extensions/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: {{ include "kube-httpcache.fullname" . }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
   labels:
-    {{- include "kube-httpcache.labels" . | nindent 4 }}
+    {{- include "kube-apps-httpcache.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

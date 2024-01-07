@@ -1,11 +1,11 @@
-# Default values for kube-httpcache.
+# Default values for kube-apps-httpcache.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: quay.io/mittwald/kube-httpcache
+  repository: quay.io/pczerkas/kube-apps-httpcache
   pullPolicy: IfNotPresent
   tag: "stable"
 
@@ -22,18 +22,14 @@ useStatefulset:
 configmap:
   enabled: true
 
-# kube-httpcache specific configuration
+# kube-apps-httpcache specific configuration
 cache:
   # name of frontend service
-  # frontendService: kube-httpcache-headless
-  # name of backend service
-  backendService: backend-service
-  # name of backend service namespace
-  # backendServiceNamespace: backend-service-namespace
+  # frontendService: kube-apps-httpcache-headless
   # watching for frontend changes is true by default
   frontendWatch: true
-  # watching for backend changes is true by default
-  backendWatch: true
+  # watching for applications changes is true by default
+  applicationsWatch: true
   # Varnish storage backend type (https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html)
   varnishStorage: malloc # default,malloc,umem,file...
   # Varnish storage backend size
@@ -110,13 +106,13 @@ topologySpreadConstraints: {}
   #   whenUnsatisfiable: ScheduleAnyway
   #   labelSelector:
   #     matchLabels:
-  #       app.kubernetes.io/name: kube-httpcache
+  #       app.kubernetes.io/name: kube-apps-httpcache
   # - topologyKey: kubernetes.io/hostname
   #   maxSkew: 1
   #   whenUnsatisfiable: ScheduleAnyway
   #   labelSelector:
   #     matchLabels:
-  #       app.kubernetes.io/name: kube-httpcache
+  #       app.kubernetes.io/name: kube-apps-httpcache
 
 initContainers: {}
 # initContainers: |
@@ -201,7 +197,7 @@ ingress:
   #         pathType: Prefix
   #         backend:
   #           service:
-  #             name: kube-httpcache
+  #             name: kube-apps-httpcache
   #             port:
   #               number: 80
   #       - path: /backend
@@ -214,7 +210,7 @@ ingress:
   #       - path: /
   #         pathType: Prefix
   #         backend:
-  #           name: kube-httpcache
+  #           name: kube-apps-httpcache
   #           port:
   #             number: 80
   tls: []

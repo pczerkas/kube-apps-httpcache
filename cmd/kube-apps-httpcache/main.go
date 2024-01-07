@@ -8,10 +8,10 @@ import (
 	"syscall"
 
 	"github.com/golang/glog"
-	"github.com/mittwald/kube-httpcache/cmd/kube-httpcache/internal"
-	"github.com/mittwald/kube-httpcache/pkg/controller"
-	"github.com/mittwald/kube-httpcache/pkg/signaller"
-	"github.com/mittwald/kube-httpcache/pkg/watcher"
+	"github.com/pczerkas/kube-apps-httpcache/cmd/kube-apps-httpcache/internal"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/controller"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/signaller"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/watcher"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	glog.Infof("running kube-httpcache with following options: %+v", opts)
+	glog.Infof("running kube-apps-httpcache with following options: %+v", opts)
 
 	var config *rest.Config
 	var err error
@@ -62,21 +62,15 @@ func main() {
 		frontendUpdates, frontendErrors = frontendWatcher.Run(ctx)
 	}
 
-	var backendUpdates chan *watcher.EndpointConfig
-	var backendErrors chan error
-	if opts.Backend.Watch {
-		backendWatcher := watcher.NewEndpointWatcher(
-			client,
-			opts.Backend.Namespace,
-			opts.Backend.Service,
-			opts.Backend.PortName,
-			opts.Kubernetes.RetryBackoff,
-		)
-		backendUpdates, backendErrors = backendWatcher.Run(ctx)
-	}
-
 	templateWatcher := watcher.MustNewTemplateWatcher(opts.Varnish.VCLTemplate, opts.Varnish.VCLTemplatePoll)
 	templateUpdates, templateErrors := templateWatcher.Run()
+
+	var applicationsUpdates chan *watcher.ApplicationConfig
+	var applicationsErrors chan error
+	if opts.Applications.Watch {
+		applicationsWatcher := watcher.NewApplicationsWatcher(opts.Applications.ApplicationsFile)
+		applicationsUpdates, applicationsErrors = applicationsWatcher.Run()
+	}
 
 	var varnishSignaller *signaller.Signaller
 	var varnishSignallerErrors chan error
@@ -108,10 +102,10 @@ func main() {
 			select {
 			case err := <-frontendErrors:
 				glog.Errorf("error while watching frontends: %s", err.Error())
-			case err := <-backendErrors:
-				glog.Errorf("error while watching backends: %s", err.Error())
 			case err := <-templateErrors:
 				glog.Errorf("error while watching template changes: %s", err.Error())
+			case err := <-applicationsErrors:
+				glog.Errorf("error while watching applications changes: %s", err.Error())
 			case err := <-varnishSignallerErrors:
 				glog.Errorf("error while running varnish signaller: %s", err.Error())
 			}
@@ -129,10 +123,13 @@ func main() {
 		opts.Admin.Address,
 		opts.Admin.Port,
 		frontendUpdates,
-		backendUpdates,
 		templateUpdates,
+		applicationsUpdates,
 		varnishSignaller,
 		opts.Varnish.VCLTemplate,
+		opts.Applications.ApplicationsFile,
+		client,
+		opts.Kubernetes.RetryBackoff,
 	)
 	if err != nil {
 		panic(err)

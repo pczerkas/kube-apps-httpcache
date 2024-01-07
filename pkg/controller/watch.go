@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,9 +15,16 @@ import (
 
 	"github.com/golang/glog"
 	varnishclient "github.com/martin-helmich/go-varnish-client"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/watcher"
 )
 
-func (v *VarnishController) watchConfigUpdates(ctx context.Context, c *exec.Cmd, errors chan<- error) {
+func (v *VarnishController) watchConfigUpdates(
+	ctx context.Context,
+	errors chan<- error,
+) {
+	// TODO:
+	// backendsCtx, backendsCancel := context.WithCancel(context.Background())
+	// backendsCtx, _ := context.WithCancel(context.Background())
 	for {
 		select {
 		case tmplContents := <-v.vclTemplateUpdates:
@@ -42,10 +48,91 @@ func (v *VarnishController) watchConfigUpdates(ctx context.Context, c *exec.Cmd,
 
 			errors <- v.rebuildConfig(ctx)
 
-		case newConfig := <-v.backendUpdates:
+		case newConfig := <-v.applicationsUpdates:
+			glog.Infof("received new applications configuration: %+v", newConfig)
+
+			// TODO: stop old applications watchers?
+			// backendsCancel()
+
+			v.applications = newConfig
+
+			// TODO:
+			// err := v.OnApplicationsUpdate(backendsCtx)
+			err := v.OnApplicationsUpdate(ctx)
+			if err != nil {
+				errors <- err
+				continue
+			}
+
+			errors <- v.rebuildConfig(ctx)
+
+		case <-ctx.Done():
+			errors <- ctx.Err()
+			return
+		}
+	}
+}
+
+func (v *VarnishController) OnApplicationsUpdate(
+	ctx context.Context,
+) error {
+	for i := range v.applications.Applications {
+		application := &v.applications.Applications[i]
+		if application.Namespace == "" || application.Service == "" || application.PortName == "" {
+			continue
+		}
+		var backendUpdates chan *watcher.EndpointConfig
+		var backendErrors chan error
+		backendWatcher := watcher.NewEndpointWatcher(
+			v.client,
+			application.Namespace,
+			application.Service,
+			application.PortName,
+			v.retryBackoff,
+		)
+		backendUpdates, backendErrors = backendWatcher.Run(ctx)
+		application.BackendUpdates = backendUpdates
+
+		application.Backend = watcher.NewEndpointConfig()
+		if application.BackendUpdates != nil {
+			application.Backend = <-application.BackendUpdates
+		}
+
+		watchErrors := make(chan error)
+		go v.watchBackendUpdates(ctx, application, watchErrors)
+
+		go func() {
+			for err := range watchErrors {
+				if err != nil {
+					glog.Warningf("error while watching for backend updates: %s", err.Error())
+				}
+			}
+		}()
+
+		go func() {
+			for {
+				select {
+				case err := <-backendErrors:
+					glog.Errorf("error while watching backend: %s", err.Error())
+				}
+			}
+		}()
+	}
+
+	return nil
+}
+
+func (v *VarnishController) watchBackendUpdates(
+	ctx context.Context,
+	application *watcher.Application,
+	errors chan<- error,
+) {
+	for {
+		select {
+		case newConfig := <-application.BackendUpdates:
 			glog.Infof("received new backend configuration: %+v", newConfig)
 
-			v.backend = newConfig
+			application.Backend = newConfig
 
 			errors <- v.rebuildConfig(ctx)
 
@@ -71,9 +158,35 @@ func (v *VarnishController) setTemplate(tmplContents []byte) error {
 }
 
 func (v *VarnishController) rebuildConfig(ctx context.Context) error {
+	applicationsVCLs := make(map[string][]byte)
+	for i := range v.applications.Applications {
+		application := &v.applications.Applications[i]
+		if application.Backend == nil {
+			glog.V(8).Infof("application '%s' has no backend, skipping it", application)
+			continue
+		}
+
+		buf := new(bytes.Buffer)
+
+		err := application.RenderVCL(buf)
+		if err != nil {
+			return err
+		}
+
+		vcl := buf.Bytes()
+		glog.V(8).Infof("new application VCL: %s", string(vcl))
+
+		applicationsVCLs[application.Label] = vcl
+	}
+
 	buf := new(bytes.Buffer)
 
-	err := v.renderVCL(buf, v.frontend.Endpoints, v.frontend.Primary, v.backend.Endpoints, v.backend.Primary)
+	err := v.renderVCL(
+		buf,
+		v.frontend.Endpoints,
+		v.frontend.Primary,
+		v.applications.Applications,
+	)
 	if err != nil {
 		return err
 	}
@@ -132,6 +245,22 @@ func (v *VarnishController) rebuildConfig(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	for label, vcl := range applicationsVCLs {
+		format := label + "_20060102_150405.00000"
+		configname := strings.ReplaceAll(time.Now().Format(format), ".", "_")
+
+		glog.V(6).Infof("about to create new application VCL: %s", string(configname))
+		err = client.DefineInlineVCL(ctx, configname, vcl, varnishclient.VCLStateAuto)
+		if err != nil {
+			return err
+		}
+
+		err = client.AddLabelToVCL(ctx, label, configname)
+		if err != nil {
+			return err
 		}
 	}
 

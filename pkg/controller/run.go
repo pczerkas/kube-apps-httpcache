@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/mittwald/kube-httpcache/pkg/watcher"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/watcher"
 )
 
 func (v *VarnishController) Run(ctx context.Context) error {
@@ -22,9 +22,9 @@ func (v *VarnishController) Run(ctx context.Context) error {
 		}
 	}
 
-	v.backend = watcher.NewEndpointConfig()
-	if v.backendUpdates != nil {
-		v.backend = <-v.backendUpdates
+	v.applications = watcher.NewApplicationConfig()
+	if v.applicationsUpdates != nil {
+		v.applications = <-v.applicationsUpdates
 	}
 
 	target, err := os.Create(v.configFile)
@@ -33,19 +33,34 @@ func (v *VarnishController) Run(ctx context.Context) error {
 	}
 
 	glog.Infof("creating initial VCL config")
-	err = v.renderVCL(target, v.frontend.Endpoints, v.frontend.Primary, v.backend.Endpoints, v.backend.Primary)
+	err = v.renderVCL(
+		target,
+		v.frontend.Endpoints,
+		v.frontend.Primary,
+		v.applications.Applications,
+	)
 	if err != nil {
 		return err
 	}
 
-	cmd, errChan := v.startVarnish(ctx)
+	_, errChan := v.startVarnish(ctx)
 
 	if err := v.waitForAdminPort(ctx); err != nil {
 		return err
 	}
 
 	watchErrors := make(chan error)
-	go v.watchConfigUpdates(ctx, cmd, watchErrors)
+	go v.watchConfigUpdates(ctx, watchErrors)
+
+	go func(errors chan<- error) {
+		err := v.OnApplicationsUpdate(ctx)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		errors <- v.rebuildConfig(ctx)
+	}(watchErrors)
 
 	go func() {
 		for err := range watchErrors {

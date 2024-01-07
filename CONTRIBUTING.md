@@ -2,13 +2,13 @@
 
 ## Deployment on a local cluster
 
-This guide explains how to build the kube-httpcache Docker image locally and test it in a local KinD[^1] cluster.
+This guide explains how to build the kube-apps-httpcache Docker image locally and test it in a local KinD[^1] cluster.
 
 1. Build image and load into kind:
 
     ```
-    $ docker build -t quay.io/mittwald/kube-httpcache:dev -f build/packages/docker/Dockerfile .
-    $ kind load docker-image quay.io/mittwald/kube-httpcache:dev
+    $ docker build -t quay.io/pczerkas/kube-apps-httpcache:dev -f build/packages/docker/Dockerfile .
+    $ kind load docker-image quay.io/pczerkas/kube-apps-httpcache:dev
     ```
 
 2. Deploy an example backend workload:
@@ -20,13 +20,13 @@ This guide explains how to build the kube-httpcache Docker image locally and tes
 3. Deploy Helm chart with example configuration:
 
     ```
-    $ helm upgrade --install -f ./test/test-values.yaml kube-httpcache ./chart
+    $ helm upgrade --install -f ./test/test-values.yaml kube-apps-httpcache ./chart
     ```
 
 4. Port-forward to the cache:
 
     ```
-    $ kubectl port-forward svc/kube-httpcache 8080:80
+    $ kubectl port-forward svc/kube-apps-httpcache 8080:80
     ```
 
 [^1]: https://kind.sigs.k8s.io

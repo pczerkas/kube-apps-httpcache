@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/mittwald/kube-httpcache/pkg/watcher"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/watcher"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -18,33 +18,33 @@ import (
 
 var (
 	signallerRequestsTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "kube_httpcache_signaller_requests_total",
+		Name: "kube_apps_httpcache_signaller_requests_total",
 		Help: "The total number of incoming requests to Signaller",
 	})
 
 	signallerErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "kube_httpcache_signaller_errors_total",
+		Name: "kube_apps_httpcache_signaller_errors_total",
 		Help: "The total number of errors for incomming requests to Signaller",
 	})
 
 	signallerResponseTime = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:       "kube_httpcache_signaller_durations_seconds",
+		Name:       "kube_apps_httpcache_signaller_durations_seconds",
 		Help:       "The Signaller response time",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	})
 
 	signallerUpstreamErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "kube_httpcache_signaller_upstream_errors_total",
+		Name: "kube_apps_httpcache_signaller_upstream_errors_total",
 		Help: "The total number of errors for outgoing requests to upstreams",
 	})
 
 	signallerQueueLength = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "kube_httpcache_signaller_queue_length",
+		Name: "kube_apps_httpcache_signaller_queue_length",
 		Help: "The length of signaller queue",
 	})
 
 	signallerQueueLatency = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:       "kube_httpcache_signaller_queue_latency",
+		Name:       "kube_apps_httpcache_signaller_queue_latency",
 		Help:       "The Signaller queue latency",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	})

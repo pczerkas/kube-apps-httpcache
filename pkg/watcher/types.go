@@ -41,6 +41,16 @@ func NewEndpointWatcher(client kubernetes.Interface, namespace, serviceName, por
 	}
 }
 
+type BackendsConfig struct {
+	Backends ApplicationBackendList
+}
+
+func NewBackendsConfig() *BackendsConfig {
+	return &BackendsConfig{
+		Backends: []Backend{},
+	}
+}
+
 type fsnotifyTemplateWatcher struct {
 	filename string
 	watcher  *fsnotify.Watcher
@@ -85,4 +95,35 @@ func NewTemplateWatcher(filename string, polling bool) (TemplateWatcher, error) 
 		filename: filename,
 		watcher:  watcher,
 	}, nil
+}
+
+type ApplicationConfig struct {
+	Applications ApplicationList
+}
+
+func NewApplicationConfig() *ApplicationConfig {
+	return &ApplicationConfig{
+		Applications: []Application{},
+	}
+}
+
+type pollingApplicationsWatcher struct {
+	filename              string
+	lastObservedTimestamp time.Time
+}
+
+type ApplicationsWatcher interface {
+	Run() (chan *ApplicationConfig, chan error)
+}
+
+func NewApplicationsWatcher(filename string) ApplicationsWatcher {
+	return &pollingApplicationsWatcher{
+		filename: filename,
+	}
+}
+
+type ApplicationTemplateData struct {
+	Application *Application
+	Backends    EndpointList
+	Env         map[string]string
 }

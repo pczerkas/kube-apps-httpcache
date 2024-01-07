@@ -1,21 +1,22 @@
 package controller
 
 import (
-	"github.com/golang/glog"
 	"io"
 	"os"
-	"strings"
 	"text/template"
+	"time"
 
-	"github.com/mittwald/kube-httpcache/pkg/signaller"
-	"github.com/mittwald/kube-httpcache/pkg/watcher"
+	"github.com/golang/glog"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/env"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/signaller"
+	"github.com/pczerkas/kube-apps-httpcache/pkg/watcher"
+	"k8s.io/client-go/kubernetes"
 )
 
 type TemplateData struct {
 	Frontends       watcher.EndpointList
 	PrimaryFrontend *watcher.Endpoint
-	Backends        watcher.EndpointList
-	PrimaryBackend  *watcher.Endpoint
+	Applications    watcher.ApplicationList
 	Env             map[string]string
 }
 
@@ -34,14 +35,20 @@ type VarnishController struct {
 	// md5 hash of unparsed template
 	vclTemplateHash    string
 	vclTemplateUpdates chan []byte
-	frontendUpdates    chan *watcher.EndpointConfig
-	frontend           *watcher.EndpointConfig
-	backendUpdates     chan *watcher.EndpointConfig
-	backend            *watcher.EndpointConfig
-	varnishSignaller   *signaller.Signaller
-	configFile         string
-	localAdminAddr     string
-	currentVCLName     string
+
+	frontendUpdates chan *watcher.EndpointConfig
+	frontend        *watcher.EndpointConfig
+
+	applicationsUpdates chan *watcher.ApplicationConfig
+	applications        *watcher.ApplicationConfig
+
+	varnishSignaller *signaller.Signaller
+	configFile       string
+	client           kubernetes.Interface
+	retryBackoff     time.Duration
+
+	// localAdminAddr string
+	currentVCLName string
 }
 
 func NewVarnishController(
@@ -55,12 +62,15 @@ func NewVarnishController(
 	adminAddr string,
 	adminPort int,
 	frontendUpdates chan *watcher.EndpointConfig,
-	backendUpdates chan *watcher.EndpointConfig,
 	templateUpdates chan []byte,
+	applicationsUpdates chan *watcher.ApplicationConfig,
 	varnishSignaller *signaller.Signaller,
 	vclTemplateFile string,
+	applicationsFile string,
+	client kubernetes.Interface,
+	retryBackoff time.Duration,
 ) (*VarnishController, error) {
-	contents, err := os.ReadFile(vclTemplateFile)
+	vclTemplateContents, err := os.ReadFile(vclTemplateFile)
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +87,13 @@ func NewVarnishController(
 		AdminPort:            adminPort,
 		vclTemplateUpdates:   templateUpdates,
 		frontendUpdates:      frontendUpdates,
-		backendUpdates:       backendUpdates,
+		applicationsUpdates:  applicationsUpdates,
 		varnishSignaller:     varnishSignaller,
 		configFile:           "/tmp/vcl",
+		client:               client,
+		retryBackoff:         retryBackoff,
 	}
-	err = v.setTemplate(contents)
+	err = v.setTemplate(vclTemplateContents)
 	if err != nil {
 		return nil, err
 	}
@@ -89,25 +101,36 @@ func NewVarnishController(
 	return &v, nil
 }
 
-func getEnvironment() map[string]string {
-	items := make(map[string]string)
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		items[pair[0]] = pair[1]
-	}
-	return items
-}
+func (v *VarnishController) renderVCL(
+	target io.Writer,
+	frontendList watcher.EndpointList,
+	primaryFrontend *watcher.Endpoint,
+	applicationList watcher.ApplicationList,
+) error {
+	filteredApplicationList := make(watcher.ApplicationList, 0)
+	for i := range applicationList {
+		application := &applicationList[i]
+		if application.Backend == nil {
+			glog.V(8).Infof("application '%s' has no backend, skipping it", application)
+			continue
+		}
 
-func (v *VarnishController) renderVCL(target io.Writer, frontendList watcher.EndpointList, primaryFrontend *watcher.Endpoint, backendList watcher.EndpointList, primaryBackend *watcher.Endpoint) error {
-	glog.V(6).Infof("rendering VCL (source md5sum: %s, Frontends:%v, PrimaryFrontend:%v, Backends:%v, PrimaryBackend:%v)",
-		v.vclTemplateHash, frontendList, primaryFrontend, backendList, primaryBackend)
+		filteredApplicationList = append(filteredApplicationList, *application)
+	}
+
+	glog.V(6).Infof(
+		"rendering VCL (source md5sum: %s, Frontends:%v, PrimaryFrontend:%v, Applications:%v)",
+		v.vclTemplateHash,
+		frontendList,
+		primaryFrontend,
+		filteredApplicationList,
+	)
 
 	err := v.vclTemplate.Execute(target, &TemplateData{
 		Frontends:       frontendList,
 		PrimaryFrontend: primaryFrontend,
-		Backends:        backendList,
-		PrimaryBackend:  primaryBackend,
-		Env:             getEnvironment(),
+		Applications:    filteredApplicationList,
+		Env:             env.GetEnvironment(),
 	})
 
 	return err

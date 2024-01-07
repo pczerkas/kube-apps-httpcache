@@ -1,11 +1,8 @@
 # Varnish on Kubernetes
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/mittwald/kube-httpcache/Test)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/pczerkas/kube-apps-httpcache/test_build.yml?branch=master)
 
 This repository contains a controller that allows you to operate a [Varnish cache](https://varnish-cache.org/) on Kubernetes.
-
----
-:warning: **COMPATIBILITY NOTICE**: As of version v0.3, the image tag name of this project was renamed from `quay.io/spaces/kube-httpcache` to `quay.io/mittwald/kube-httpcache`. The old image will remain available (for the time being), but only the new image name will receive any updates. **Please remember to adjust the image name when upgrading**.
 
 ---
 
@@ -49,7 +46,7 @@ The Varnish controller needs the following prerequisites to run:
 - A Varnish [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) that will be used as frontend for the Varnish controller
 - If RBAC is enabled in your cluster, you'll need a ServiceAccount with a role that grants `WATCH` access to the `endpoints` resource in the respective namespace
 
-After starting, the Varnish controller will watch the configured Varnish service's endpoints and application service's endpoints; on startup and whenever these change, it will use the supplied VCL template to generate a new Varnish configuration and load this configuration at runtime.
+After starting, the Varnish controller will watch the configured Varnish service's endpoints and applications service's endpoints; on startup and whenever these change, it will use the supplied VCL template to generate a new Varnish configuration and load this configuration at runtime.
 
 The controller does not ship with any preconfigured configuration; the upstream connection and advanced features like load balancing are possible, but need to be configured in the VCL template supplied by you.
 
@@ -201,9 +198,9 @@ $ kubectl create secret generic varnish-secret --from-literal=secret=$(head -c32
 If RBAC is enabled in your cluster, you will need to create a `ServiceAccount` with a respective `Role`.
 
 ```
-$ kubectl create serviceaccount kube-httpcache
-$ kubectl apply -f https://raw.githubusercontent.com/mittwald/kube-httpcache/master/deploy/kubernetes/rbac.yaml
-$ kubectl create rolebinding kube-httpcache --clusterrole=kube-httpcache --serviceaccount=kube-httpcache
+$ kubectl create serviceaccount kube-apps-httpcache
+$ kubectl apply -f https://raw.githubusercontent.com/pczerkas/kube-apps-httpcache/master/deploy/kubernetes/rbac.yaml
+$ kubectl create rolebinding kube-apps-httpcache --clusterrole=kube-apps-httpcache --serviceaccount=kube-apps-httpcache
 ```
 
 ### Deploy Varnish
@@ -232,7 +229,7 @@ $ kubectl create rolebinding kube-httpcache --clusterrole=kube-httpcache --servi
         spec:
           containers:
           - name: cache
-            image: quay.io/mittwald/kube-httpcache:stable
+            image: quay.io/pczerkas/kube-apps-httpcache:stable
             imagePullPolicy: Always
             args:
             - -admin-addr=0.0.0.0
@@ -243,9 +240,8 @@ $ kubectl create rolebinding kube-httpcache --clusterrole=kube-httpcache --servi
             - -frontend-namespace=$(NAMESPACE)
             - -frontend-service=frontend-service
             - -frontend-port=8080
-            - -backend-watch
-            - -backend-namespace=$(NAMESPACE)
-            - -backend-service=backend-service
+            - -applications-watch
+            - -applications-file=/etc/varnish/applications/applications.json
             - -varnish-secret-file=/etc/varnish/k8s-secret/secret
             - -varnish-vcl-template=/etc/varnish/tmpl/default.vcl.tmpl
             - -varnish-storage=malloc,128M
@@ -264,7 +260,7 @@ $ kubectl create rolebinding kube-httpcache --clusterrole=kube-httpcache --servi
               name: http
             - containerPort: 8090
               name: signaller
-          serviceAccountName: kube-httpcache  # when using RBAC
+          serviceAccountName: kube-apps-httpcache  # when using RBAC
           restartPolicy: Always
           volumes:
           - name: template
@@ -360,7 +356,7 @@ sub vcl_recv {
 
 <hr>
 
-**NOTE**: Native support for `ExternalName` services is a requested feature. Have a look at [#39](https://github.com/mittwald/kube-httpcache/issues/39) if you're willing to help out.
+**NOTE**: Native support for `ExternalName` services is a requested feature. Have a look at [#39](https://github.com/pczerkas/kube-apps-httpcache/issues/39) if you're willing to help out.
 
 <hr>
 
@@ -401,16 +397,11 @@ data:
     // ...
 ```
 
-When starting kube-httpcache, remember to set the `--backend-watch=false` flag to disable watching the (non-existent) backend endpoints.
+When starting kube-apps-httpcache, remember to set the `--applications-watch=false` flag to disable watching the (non-existent) backend endpoints.
 
 ## Helm Chart installation
 
-You can use the [Helm chart](chart/) to rollout an instance of kube-httpcache:
-
-```
-$ helm repo add mittwald https://helm.mittwald.de
-$ helm install -f your-values.yaml kube-httpcache mittwald/kube-httpcache
-```
+You can use the [Helm chart](chart/) to rollout an instance of kube-apps-httpcache.
 
 For possible values, have a look at the comments in the provided [`values.yaml` file](./chart/values.yaml). Take special note that you'll most likely have to overwrite the `vclTemplate` value with your own VCL configuration file.
 
@@ -430,7 +421,7 @@ spec:
   type: ClusterIP
 ```
 
-An ingress points to the kube-httpcache service which cached
+An ingress points to the kube-apps-httpcache service which cached
 your backend service:
 
 ```
@@ -445,7 +436,7 @@ spec:
       paths:
       - backend:
           service:
-            name: kube-httpcache
+            name: kube-apps-httpcache
             port:
               number: 80
         path: /

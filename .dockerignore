@@ -1,6 +1,13 @@
+/.idea
+/.vscode
 test/
 build/
+chart/
 deploy/
+dist/
+!dist/build/package/docker/Dockerfile.base.tpl
+!dist/build/package/docker/Dockerfile.debug.tpl
+!dist/configure-squid-ca.sh
 LICENSE
 .travis.yml
 .gitignore

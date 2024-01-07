@@ -1,4 +1,4 @@
-module github.com/mittwald/kube-httpcache
+module github.com/pczerkas/kube-apps-httpcache
 
 go 1.20
 

@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "kube-httpcache.name" -}}
+{{- define "kube-apps-httpcache.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "kube-httpcache.fullname" -}}
+{{- define "kube-apps-httpcache.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "kube-httpcache.chart" -}}
+{{- define "kube-apps-httpcache.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "kube-httpcache.labels" -}}
-helm.sh/chart: {{ include "kube-httpcache.chart" . }}
-{{ include "kube-httpcache.selectorLabels" . }}
+{{- define "kube-apps-httpcache.labels" -}}
+helm.sh/chart: {{ include "kube-apps-httpcache.chart" . }}
+{{ include "kube-apps-httpcache.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "kube-httpcache.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kube-httpcache.name" . }}
+{{- define "kube-apps-httpcache.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "kube-apps-httpcache.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "kube-httpcache.serviceAccountName" -}}
+{{- define "kube-apps-httpcache.serviceAccountName" -}}
 {{- if .Values.serviceAccount.enabled }}
-{{- default (include "kube-httpcache.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "kube-apps-httpcache.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

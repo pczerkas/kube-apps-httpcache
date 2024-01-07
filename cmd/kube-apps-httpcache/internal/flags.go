@@ -3,8 +3,6 @@ package internal
 import (
 	"flag"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 type KubeHTTPProxyFlags struct {
@@ -21,12 +19,9 @@ type KubeHTTPProxyFlags struct {
 		Service   string
 		PortName  string
 	}
-	Backend struct {
-		Watch     bool
-		Namespace string
-		Service   string
-		Port      string
-		PortName  string
+	Applications struct {
+		Watch            bool
+		ApplicationsFile string
 	}
 	Signaller struct {
 		Enable                       bool
@@ -76,11 +71,8 @@ func (f *KubeHTTPProxyFlags) Parse() error {
 	flag.StringVar(&f.Frontend.Service, "frontend-service", "", "name of Kubernetes frontend service")
 	flag.StringVar(&f.Frontend.PortName, "frontend-portname", "http", "name of frontend port")
 
-	flag.BoolVar(&f.Backend.Watch, "backend-watch", true, "watch for Kubernetes backend updates")
-	flag.StringVar(&f.Backend.Namespace, "backend-namespace", "", "name of Kubernetes backend namespace")
-	flag.StringVar(&f.Backend.Service, "backend-service", "", "name of Kubernetes backend service")
-	flag.StringVar(&f.Backend.Port, "backend-port", "", "deprecated: name of backend port")
-	flag.StringVar(&f.Backend.PortName, "backend-portname", "http", "name of backend port")
+	flag.BoolVar(&f.Applications.Watch, "applications-watch", true, "watch for Kubernetes applications updates")
+	flag.StringVar(&f.Applications.ApplicationsFile, "applications-file", "/etc/varnish/applications/applications.json", "Applications file")
 
 	flag.BoolVar(&f.Signaller.Enable, "signaller-enable", false, "enable signaller functionality for broadcasting PURGE and BAN requests")
 	flag.StringVar(&f.Signaller.Address, "signaller-addr", "0.0.0.0", "TCP address for the signaller")
@@ -114,11 +106,6 @@ func (f *KubeHTTPProxyFlags) Parse() error {
 	flag.StringVar(&f.Readiness.Address, "readiness-addr", "0.0.0.0:9102", "address for the readiness probe to listen on")
 
 	flag.Parse()
-
-	if len(f.Backend.Port) > 0 {
-		f.Backend.PortName = f.Backend.Port
-		glog.Warningf("-backend-port flag has been deprecated in favor of -backend-portname and will be removed in future versions")
-	}
 
 	f.Kubernetes.RetryBackoff, err = time.ParseDuration(f.Kubernetes.RetryBackoffString)
 	if err != nil {

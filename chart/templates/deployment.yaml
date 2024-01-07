@@ -3,9 +3,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kube-httpcache.fullname" . }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
   labels:
-    {{- include "kube-httpcache.labels" . | nindent 4 }}
+    {{- include "kube-apps-httpcache.labels" . | nindent 4 }}
   {{- with .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -16,7 +16,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      {{- include "kube-httpcache.selectorLabels" . | nindent 6 }}
+      {{- include "kube-apps-httpcache.selectorLabels" . | nindent 6 }}
   template:
     metadata:
     {{- with .Values.podAnnotations }}
@@ -24,7 +24,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        {{- include "kube-httpcache.selectorLabels" . | nindent 8 }}
+        {{- include "kube-apps-httpcache.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -33,7 +33,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "kube-httpcache.serviceAccountName" . }}
+      serviceAccountName: {{ include "kube-apps-httpcache.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.topologySpreadConstraints }}
@@ -72,14 +72,13 @@ spec:
           - -frontend-watch=false
           {{- end }}
           - -frontend-namespace={{ "$(NAMESPACE)" }}
-          - -frontend-service={{ .Values.cache.frontendService | default (include "kube-httpcache.fullname" .) }}
-          {{- if .Values.cache.backendWatch }}
-          - -backend-watch
+          - -frontend-service={{ .Values.cache.frontendService | default (include "kube-apps-httpcache.fullname" .) }}
+          {{- if .Values.cache.applicationsWatch }}
+          - -applications-watch
           {{- else }}
-          - -backend-watch=false
+          - -applications-watch=false
           {{- end }}
-          - -backend-service={{ .Values.cache.backendService }}
-          - -backend-namespace={{ .Values.cache.backendServiceNamespace | default "$(NAMESPACE)" }}
+          - -applications-file=/etc/varnish/applications/applications.json
           - -varnish-secret-file=/etc/varnish/k8s-secret/secret
           - -varnish-vcl-template=/etc/varnish/tmpl/default.vcl.tmpl
           - -varnish-storage={{ .Values.cache.varnishStorage }},{{ .Values.cache.storageSize }}
@@ -118,6 +117,8 @@ spec:
             mountPath: /etc/varnish/k8s-secret
           - name: var
             mountPath: /var/lib/varnish
+          - name: applications
+            mountPath: /etc/varnish/applications
           {{- if .Values.extraMounts }}
             {{- toYaml .Values.extraMounts | nindent 10 }}
           {{- end }}
@@ -164,13 +165,16 @@ spec:
       {{- if .Values.configmap.enabled }}
       - name: template
         configMap:
-          name: {{ include "kube-httpcache.fullname" . }}
+          name: {{ include "kube-apps-httpcache.fullname" . }}
       {{- end }}
       - name: secret
         secret:
-          secretName: {{ .Values.cache.existingSecret | default (include "kube-httpcache.fullname" .) }}
+          secretName: {{ .Values.cache.existingSecret | default (include "kube-apps-httpcache.fullname" .) }}
       - name: var
         emptyDir: {}
+      - name: applications
+        configMap:
+          name: {{ include "kube-apps-httpcache.fullname" . }}-applications
       {{- if .Values.extraVolumes -}}
       {{- toYaml .Values.extraVolumes | nindent 6 }}
       {{- end }}

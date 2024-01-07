@@ -2,16 +2,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "kube-httpcache.fullname" . }}
+  name: {{ include "kube-apps-httpcache.fullname" . }}
   labels:
-    {{- include "kube-httpcache.labels" . | nindent 4 }}
+    {{- include "kube-apps-httpcache.labels" . | nindent 4 }}
     {{- if .Values.serviceMonitor.additionalLabels }}
 {{ toYaml .Values.serviceMonitor.additionalLabels | indent 4 }}
     {{- end }}
 spec:
   selector:
     matchLabels:
-      {{- include "kube-httpcache.selectorLabels" . | nindent 6 }}
+      {{- include "kube-apps-httpcache.selectorLabels" . | nindent 6 }}
   endpoints:
   - port: metrics
     path: /metrics
