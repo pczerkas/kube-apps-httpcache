@@ -24,10 +24,10 @@ jobs:
           chmod +x /tmp/helm
 
       - name: Test template rendering
-        run: /tmp/helm template ./chart/.
+        run: /tmp/helm template ./chart/kube-apps-httpcache/.
 
       - name: Lint chart
-        run: /tmp/helm lint ./chart/
+        run: /tmp/helm lint ./chart/kube-apps-httpcache/
 
   build:
     name: Build
