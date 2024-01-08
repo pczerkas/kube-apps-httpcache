@@ -58,7 +58,7 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           severity: HIGH,CRITICAL
           # severity_threshold: HIGH
-          # annotations: true
+          annotations: true
 
       - name: Configure Git
         run: |
