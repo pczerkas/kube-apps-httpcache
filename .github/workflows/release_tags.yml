@@ -45,6 +45,7 @@ jobs:
       #       type=semver,pattern={{version}}
 
       - name: Set GoReleaser current tag
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
           EVENT_REF: ${{ github.event.ref }}
