@@ -401,14 +401,22 @@ When starting kube-apps-httpcache, remember to set the `--applications-watch=fal
 
 ## Helm Chart installation
 
-You can use the [Helm chart](chart/) to rollout an instance of kube-apps-httpcache.
+You can use the [Helm chart](chart/kube-apps-httpcache/) to rollout an instance of kube-apps-httpcache. Helm chart [Home page](https://pczerkas.github.io/kube-apps-httpcache/)
 
 ```
 $ helm repo add kube-apps-httpcache https://pczerkas.github.io/kube-apps-httpcache
 $ helm install -f test/chart-values.yaml kube-apps-httpcache kube-apps-httpcache/kube-apps-httpcache
+$ kubectl apply -f test/test.yaml
+
+$ kubectl port-forward service/kube-apps-httpcache 4503:80 2>&1 >/dev/null &
+$ curl -v -H 'Host: test-app1.com' localhost:4503
+
+$ kill $(ps a |grep service/kube-apps-httpcach[e] |cut -d' ' -f1)
+$ kubectl delete -f test/test.yaml
+$ helm delete kube-apps-httpcache
 ```
 
-For possible values, have a look at the comments in the provided [`values.yaml` file](./chart/values.yaml). Take special note that you'll most likely have to overwrite the `vclTemplate` value with your own VCL configuration file.
+For possible values, have a look at the comments in the provided [`values.yaml` file](./chart/kube-apps-httpcache/values.yaml). Take special note that you'll most likely have to overwrite the `vclTemplate` value with your own VCL configuration file.
 
 Ensure your defined backend services have a port named `http`:
 
@@ -448,7 +456,7 @@ spec:
         pathType: Prefix
 ```
 
-Look at the `vclTemplate` property in [chart/values.yaml](chart/values.yaml) to define
+Look at the `vclTemplate` property in [chart/kube-apps-httpcache/values.yaml](chart/kube-apps-httpcache/values.yaml) to define
 your own Varnish cluster rules or load with `extraVolume` an extra file
 as initContainer if your ruleset is really big.
 
