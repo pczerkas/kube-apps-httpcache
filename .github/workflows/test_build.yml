@@ -83,8 +83,9 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          version: "1.23.0"
-          args: release -f build/ci/.goreleaser-test.yml --snapshot --clean
+          #version: "1.23.0"
+          version: "0.181.1"
+          args: release -f build/ci/.goreleaser-test.yml --rm-dist --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
       - name: List snapshot images
