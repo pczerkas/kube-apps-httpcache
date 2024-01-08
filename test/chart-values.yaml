@@ -1,0 +1,69 @@
+useStatefulset:
+  # Disable StatefulSet
+  # enabled: false
+  enabled: true
+
+cache:
+  applications:
+    - label: l001
+      namespace: default
+      service: test-backend
+      portName: http
+      hostRe: ^test\-app1\.com
+      vclTemplate: |
+        vcl 4.0;
+
+        import std;
+        import directors;
+
+        {{ range .Backends }}
+        backend be-{{ .Name }} {
+            .host = "{{ .Host }}";
+            .port = "{{ .Port }}";
+        }
+        {{- end }}
+
+        sub vcl_init {
+            new lb = directors.round_robin();
+
+            {{ range .Backends -}}
+            lb.add_backend(be-{{ .Name }});
+            {{ end }}
+        }
+
+        sub vcl_recv
+        {
+            set req.backend_hint = lb.backend();
+        }
+
+vclTemplate: |
+  vcl 4.0;
+
+  import std;
+
+  # We have to have a backend, even if we do not use it
+  backend default { .host = "127.0.0.1"; }
+
+  sub vcl_recv {
+      # Normalize host header
+      set req.http.host = std.tolower(req.http.host);
+
+      {{ range .Applications }}
+      if (req.http.host ~ "{{ .HostRe }}") {
+          return (vcl({{ .Label }}));
+      }
+      {{- end }}
+
+      return (synth(302, "http://varnish-cache.org"));
+  }
+
+  sub vcl_synth {
+      if (resp.status == 301 || resp.status == 302) {
+          set resp.http.location = resp.reason;
+          set resp.reason = "Moved";
+          return (deliver);
+      }
+  }
+
+# cacheExtraArgs: |
+#   - -v=8

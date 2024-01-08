@@ -403,6 +403,11 @@ When starting kube-apps-httpcache, remember to set the `--applications-watch=fal
 
 You can use the [Helm chart](chart/) to rollout an instance of kube-apps-httpcache.
 
+```
+$ helm repo add kube-apps-httpcache https://pczerkas.github.io/kube-apps-httpcache
+$ helm install -f test/chart-values.yaml kube-apps-httpcache kube-apps-httpcache/kube-apps-httpcache
+```
+
 For possible values, have a look at the comments in the provided [`values.yaml` file](./chart/values.yaml). Take special note that you'll most likely have to overwrite the `vclTemplate` value with your own VCL configuration file.
 
 Ensure your defined backend services have a port named `http`:

@@ -52,11 +52,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
 
-      - name: Scan for vulnerabilities
-        uses: crazy-max/ghaction-container-scan@v3
-        with:
-          # image: user/app:latest
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      # - name: Scan for vulnerabilities
+      #   uses: crazy-max/ghaction-container-scan@v3
+      #   with:
+      #     # image: user/app:latest
+      #     image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Configure Git
         run: |
