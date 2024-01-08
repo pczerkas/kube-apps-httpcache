@@ -56,7 +56,9 @@ jobs:
         uses: crazy-max/ghaction-container-scan@v3
         with:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          severity_threshold: HIGH
+          severity: HIGH,CRITICAL
+          # severity_threshold: HIGH
+          # annotations: true
 
       - name: Configure Git
         run: |
