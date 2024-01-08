@@ -84,6 +84,4 @@ jobs:
           EVENT_REF: ${{ github.event.ref }}
         shell: bash
         run: |
-          TAG_NAME="${EVENT_REF}"
-          TAG_NAME="$(echo $TAG_NAME | sed 's|^ref/tags/v||')"
-          git push --delete origin ref/tags/${REPOSITORY_NAME}-${TAG_NAME}
+          git push --delete origin refs/tags/${REPOSITORY_NAME}-${EVENT_REF#refs/tags/v}
