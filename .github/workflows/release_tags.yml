@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
@@ -54,6 +54,12 @@ jobs:
           args: release --rm-dist -f build/ci/.goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
+
+      # - name: Scan for vulnerabilities
+      #   uses: crazy-max/ghaction-container-scan@v3
+      #   with:
+      #     # image: user/app:latest
+      #     image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       # - name: Run chart version bump
       #   uses: mittwald/bump-app-version-action@v1
