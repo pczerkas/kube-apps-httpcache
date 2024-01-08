@@ -54,7 +54,7 @@ jobs:
         # chart-releaser latest tag has non-semver format, need to convert it
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "GORELEASER_CURRENT_TAG=v${LATEST_TAG//${REPOSITORY_NAME}\-/}" >> "$GITHUB_ENV"
+          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//^${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
