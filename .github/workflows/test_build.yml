@@ -48,15 +48,37 @@ jobs:
         with:
           go-version: "1.21"
 
+      # - name: Set GoReleaser current tag
+      #   env:
+      #     REPOSITORY_NAME: ${{ github.event.repository.name }}
+      #   # chart-releaser latest tag has non-semver format, need to convert it
+      #   run: |
+      #     LATEST_TAG=$(git describe --tags --abbrev=0)
+      #     echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
+      # - name: Run GoReleaser
+      #   uses: goreleaser/goreleaser-action@v5
+      #   with:
+      #     version: "1.23.0"
+      #     args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Set GoReleaser current tag
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
-        # chart-releaser latest tag has non-semver format, need to convert it
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
+          echo "GORELEASER_CURRENT_TAG=v0.0.0-$GITHUB_SHA" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: "1.23.0"
-          args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean
+          args: release -f build/ci/.goreleaser-test.yml --snapshot --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
+      - name: List snapshot images
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | \
+            grep -e "$GITHUB_REPOSITORY:.*$(git rev-parse --short HEAD).*" | \
+            paste -sd ' ' /dev/stdin > images
+          cat images
