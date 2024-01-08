@@ -1,5 +1,3 @@
-# Przemek Czerkas Helm Charts
-
 ## Usage
 
 [Helm](https://helm.sh) must be installed to use the charts.
