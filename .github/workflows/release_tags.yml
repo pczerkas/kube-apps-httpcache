@@ -36,14 +36,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.RELEASE_USER_TOKEN }}
 
-      # - name: Extract metadata (tags, labels) for Docker
-      #   id: meta
-      #   uses: docker/metadata-action@v3
-      #   with:
-      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      #     tags: |
-      #       type=semver,pattern={{version}}
-
       - name: Set GoReleaser current tag
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
@@ -84,11 +76,3 @@ jobs:
           charts_dir: chart
         env:
           CR_TOKEN: "${{ secrets.RELEASE_USER_TOKEN }}"
-
-      # - name: Delete chart-releaser tag
-      #   env:
-      #     REPOSITORY_NAME: ${{ github.event.repository.name }}
-      #     EVENT_REF: ${{ github.event.ref }}
-      #   shell: bash
-      #   run: |
-      #     git push --delete origin refs/tags/${REPOSITORY_NAME}-${EVENT_REF#refs/tags/v}
