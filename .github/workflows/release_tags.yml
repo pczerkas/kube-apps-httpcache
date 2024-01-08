@@ -55,8 +55,8 @@ jobs:
       - name: Scan for vulnerabilities
         uses: crazy-max/ghaction-container-scan@v3
         with:
-          # image: user/app:latest
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          severity_threshold: HIGH
 
       - name: Configure Git
         run: |
@@ -74,3 +74,10 @@ jobs:
           charts_dir: chart
         env:
           CR_TOKEN: "${{ secrets.RELEASE_USER_TOKEN }}"
+
+      - name: Delete chart-releaser tag
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          EVENT_REF: ${{ github.event.ref }}
+        shell: bash
+        run: git push --delete origin ref/tags/${REPOSITORY_NAME}-${EVENT_REF#ref/tags/v}
