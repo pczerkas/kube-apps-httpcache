@@ -48,7 +48,8 @@ jobs:
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
           EVENT_REF: ${{ github.event.ref }}
-        run: echo "GORELEASER_CURRENT_TAG=v${EVENT_REF#refs/tags/${REPOSITORY_NAME}-}" >> "$GITHUB_ENV"
+        # chart-releaser latest tag has non-semver format, need to convert it
+        run: echo "GORELEASER_CURRENT_TAG=${EVENT_REF//refs\/tags\/${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
