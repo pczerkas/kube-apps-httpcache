@@ -119,6 +119,7 @@ jobs:
 
       - name: Install Helm chart
         run: |
+          kind load docker-image ${REPOSITORY}:${TAG}
           /tmp/helm install \
             -f test/chart-values.yaml \
             -f build/ci/chart-values.yaml \
