@@ -144,4 +144,5 @@ jobs:
           sleep 10
 
           echo 'Checking response from test-app1.com'
-          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 | rg --passthru 'Content-Type: application/jsox'
+          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 \
+            | rg --passthru '"hostname":"test-app1.com"'
