@@ -121,8 +121,9 @@ jobs:
 
       - name: Install Helm chart
         run: |
-          kind load docker-image ${REPOSITORY}:${TAG} --name $KIND_CLUSTER_NAME
+          # kind load docker-image ${REPOSITORY}:${TAG} --name $KIND_CLUSTER_NAME
           image_sha=$(docker inspect --format='{{index .Id}}' ${REPOSITORY}:${TAG} | cut -d':' -f 2)
+          kind load docker-image $REPOSITORY:$image_sha --name $KIND_CLUSTER_NAME
 
           /tmp/helm install \
             -f test/chart-values.yaml \
