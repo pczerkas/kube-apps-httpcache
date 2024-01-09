@@ -131,14 +131,15 @@ jobs:
             kube-apps-httpcache \
             ./chart/kube-apps-httpcache \
             --timeout 7m0s \
+            --wait \
             --debug
-            #--wait \
             #--set-string image.tag=$image_sha \
 
       - name: Test
         run: |
           docker images
-          sleep 20
+          sleep 10
+
           #kubectl logs deployment/kube-apps-httpcache
           #kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
           kubectl get events --field-selector type!=Normal -A
@@ -148,4 +149,4 @@ jobs:
             4503:80 \
             2>&1 >/dev/null &
           sleep 10
-          curl -v -H 'Host: test-app1.com' localhost:4503
+          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 | grep -q 'Content-Type: application/jsox'

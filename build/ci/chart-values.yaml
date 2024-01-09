@@ -3,6 +3,6 @@ image:
   pullPolicy: Never
   tag: "ci"
 
-useStatefulset:
-  # Disable StatefulSet
-  enabled: false
+# useStatefulset:
+#   # Disable StatefulSet
+#   enabled: false
