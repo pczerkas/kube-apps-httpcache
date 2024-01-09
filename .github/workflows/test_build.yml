@@ -97,6 +97,7 @@ jobs:
             -f build/package/docker/Dockerfile \
             --tag ${REPOSITORY}:${TAG} \
             --provenance false \
+            --load \
             .
 
       - name: Set up Helm
