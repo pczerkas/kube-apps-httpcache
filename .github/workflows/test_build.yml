@@ -106,13 +106,15 @@ jobs:
           chmod +x /tmp/helm
 
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.5.0
+        uses: helm/kind-action@v1
         with:
+          version: v0.20.0
           config: build/ci/kind-config.yaml
 
       - name: Install test backend
         run: |
-          kubectl apply -f test/test.yaml
+          kubectl apply \
+            -f test/test.yaml
 
       - name: Install Helm chart
         run: |
@@ -122,13 +124,14 @@ jobs:
             kube-apps-httpcache \
             ./chart/kube-apps-httpcache \
             --timeout 7m0s \
-            --wait
-
-      - name : Install kubectl
-        uses: azure/setup-kubectl@v3
+            --wait \
+            --debug
 
       - name: Test
         run: |
-          kubectl port-forward service/kube-apps-httpcache 4503:80 2>&1 >/dev/null &
+          kubectl port-forward \
+            service/kube-apps-httpcache \
+            4503:80 \
+            2>&1 >/dev/null &
           sleep 10
           curl -v -H 'Host: test-app1.com' localhost:4503
