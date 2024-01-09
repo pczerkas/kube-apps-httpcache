@@ -124,11 +124,12 @@ jobs:
             kube-apps-httpcache \
             ./chart/kube-apps-httpcache \
             --timeout 7m0s \
-            --wait \
             --debug
+            #--wait \
 
       - name: Test
         run: |
+          kubectl logs deployment/kube-apps-httpcache
           kubectl port-forward \
             service/kube-apps-httpcache \
             4503:80 \
