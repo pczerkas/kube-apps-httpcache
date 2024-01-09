@@ -79,6 +79,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HELM_VERSION: 3.1.2
+      REPOSITORY: local/kube-apps-httpcache
+      TAG: "ci"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,7 +95,7 @@ jobs:
           DOCKER_BUILDKIT=1 \
           docker buildx build \
             -f build/package/docker/Dockerfile \
-            --tag local/kube-apps-httpcache:dev \
+            --tag ${REPOSITORY}:${TAG} \
             --provenance false \
             .
 
@@ -116,5 +118,6 @@ jobs:
         run: |
           /tmp/helm install \
             -f test/chart-values.yaml \
+            -f build/ci/chart-values.yaml \
             kube-apps-httpcache \
             ./chart/kube-apps-httpcache
