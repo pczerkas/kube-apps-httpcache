@@ -81,6 +81,7 @@ jobs:
       HELM_VERSION: 3.1.2
       REPOSITORY: local/kube-apps-httpcache
       TAG: "ci"
+      KIND_CLUSTER_NAME: e2e
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,6 +110,7 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
         with:
+          cluster_name: $KIND_CLUSTER_NAME
           version: v0.20.0
           config: build/ci/kind-config.yaml
 
@@ -119,7 +121,7 @@ jobs:
 
       - name: Install Helm chart
         run: |
-          kind load docker-image ${REPOSITORY}:${TAG}
+          kind load docker-image ${REPOSITORY}:${TAG} --name $KIND_CLUSTER_NAME
           /tmp/helm install \
             -f test/chart-values.yaml \
             -f build/ci/chart-values.yaml \
