@@ -51,17 +51,6 @@ jobs:
         with:
           go-version: "1.21"
 
-      #################
-      # - name: Log in to the Container registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ${{ env.REGISTRY }}
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.RELEASE_USER_TOKEN }}
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #################
-
       - name: Set GoReleaser current tag
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
@@ -121,6 +110,7 @@ jobs:
 
       - name: Install Helm chart
         run: |
+          docker images
           kind load docker-image $REPOSITORY:$TAG --name $KIND_CLUSTER_NAME
           #image_sha=$(docker inspect --format='{{index .Id}}' ${REPOSITORY}:${TAG} | cut -d':' -f 2)
           #kind load docker-image $REPOSITORY:$image_sha --name $KIND_CLUSTER_NAME
@@ -137,7 +127,6 @@ jobs:
 
       - name: Test
         run: |
-          docker images
           sleep 10
 
           #kubectl logs deployment/kube-apps-httpcache
@@ -149,4 +138,6 @@ jobs:
             4503:80 \
             2>&1 >/dev/null &
           sleep 10
+
+          echo 'Checking response from test-app1.com'
           curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 | grep -q 'Content-Type: application/jsox'
