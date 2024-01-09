@@ -52,45 +52,69 @@ jobs:
           go-version: "1.21"
 
       #################
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.RELEASE_USER_TOKEN }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      #################
-
-      # - name: Set GoReleaser current tag
-      #   env:
-      #     REPOSITORY_NAME: ${{ github.event.repository.name }}
-      #   # chart-releaser latest tag has non-semver format, need to convert it
-      #   run: |
-      #     LATEST_TAG=$(git describe --tags --abbrev=0)
-      #     echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
-      # - name: Run GoReleaser
-      #   uses: goreleaser/goreleaser-action@v5
+      # - name: Log in to the Container registry
+      #   uses: docker/login-action@v3
       #   with:
-      #     version: "1.23.0"
-      #     args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean
+      #     registry: ${{ env.REGISTRY }}
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.RELEASE_USER_TOKEN }}
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      #################
 
       - name: Set GoReleaser current tag
         env:
           REPOSITORY_NAME: ${{ github.event.repository.name }}
+        # chart-releaser latest tag has non-semver format, need to convert it
         run: |
-          echo "GORELEASER_CURRENT_TAG=v0.0.0-$GITHUB_SHA" >> "$GITHUB_ENV"
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          #version: "1.23.0"
-          version: "0.181.1"
-          args: release -f build/ci/.goreleaser-test.yml --rm-dist --snapshot
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
-      - name: List snapshot images
+          version: "1.23.0"
+          args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    env:
+      HELM_VERSION: 3.1.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | \
-            grep -e "$GITHUB_REPOSITORY:.*$(git rev-parse --short HEAD).*" | \
-            paste -sd ' ' /dev/stdin > images
-          cat images
+          DOCKER_BUILDKIT=1 \
+          docker buildx build \
+            -f build/package/docker/Dockerfile \
+            --tag local/kube-apps-httpcache:dev \
+            --provenance false \
+            .
+
+      - name: Set up Helm
+        run: |
+          wget https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz -O /tmp/helm.tar.gz
+          tar xzf /tmp/helm.tar.gz -C /tmp --strip-components=1
+          chmod +x /tmp/helm
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.5.0
+        with:
+          config: build/ci/kind-config.yaml
+
+      - name: Install test backend
+        run: |
+          kubectl apply -f test/test.yaml
+
+      - name: Install Helm chart
+        run: |
+          /tmp/helm install \
+            -f test/chart-values.yaml \
+            kube-apps-httpcache \
+            ./chart/kube-apps-httpcache
