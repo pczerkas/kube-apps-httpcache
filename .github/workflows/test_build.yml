@@ -129,7 +129,10 @@ jobs:
 
       - name: Test
         run: |
-          kubectl logs deployment/kube-apps-httpcache
+          sleep 20
+          #kubectl logs deployment/kube-apps-httpcache
+          kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
+
           kubectl port-forward \
             service/kube-apps-httpcache \
             4503:80 \
