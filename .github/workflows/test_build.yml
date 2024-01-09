@@ -125,6 +125,10 @@ jobs:
             --debug
             #--set-string image.tag=$image_sha \
 
+      - name: Install Ripgrep
+        run: |
+          sudo apt-get install ripgrep
+
       - name: Test
         run: |
           sleep 10
@@ -140,4 +144,4 @@ jobs:
           sleep 10
 
           echo 'Checking response from test-app1.com'
-          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 | grep -q 'Content-Type: application/jsox'
+          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 | rg --passthru 'Content-Type: application/jsox'
