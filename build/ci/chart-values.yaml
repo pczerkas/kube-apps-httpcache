@@ -2,3 +2,7 @@ image:
   repository: local/kube-apps-httpcache
   pullPolicy: Always
   tag: "ci"
+
+useStatefulset:
+  # Disable StatefulSet
+  enabled: false
