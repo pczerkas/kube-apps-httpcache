@@ -131,7 +131,8 @@ jobs:
         run: |
           sleep 20
           #kubectl logs deployment/kube-apps-httpcache
-          kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
+          #kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
+          kubectl get events --field-selector type!=Normal -A
 
           kubectl port-forward \
             service/kube-apps-httpcache \
