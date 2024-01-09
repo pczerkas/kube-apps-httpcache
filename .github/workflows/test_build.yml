@@ -129,6 +129,7 @@ jobs:
 
       - name: Test
         run: |
+          docker images
           sleep 20
           #kubectl logs deployment/kube-apps-httpcache
           #kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
