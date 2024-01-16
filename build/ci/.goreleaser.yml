@@ -4,7 +4,6 @@ before:
     - go mod download
     - go vet ./...
     - go test ./...
-    - cp build/package/docker/entrypoint.sh ./entrypoint.sh
 builds:
   - env:
       - CGO_ENABLED=0
@@ -36,6 +35,8 @@ dockers:
       - ghcr.io/pczerkas/kube-apps-httpcache:stable-amd64
     use: buildx
     dockerfile: build/package/docker/GoReleaser.Dockerfile
+    extra_files:
+      - build/package/docker/entrypoint.sh
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--build-arg=ARCH=amd64/"
@@ -53,6 +54,8 @@ dockers:
       - ghcr.io/pczerkas/kube-apps-httpcache:stable-arm64
     use: buildx
     dockerfile: build/package/docker/GoReleaser.Dockerfile
+    extra_files:
+      - build/package/docker/entrypoint.sh
     build_flag_templates:
       - "--platform=linux/arm64/v8"
       - "--build-arg=ARCH=arm64v8/"
