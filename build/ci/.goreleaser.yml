@@ -4,6 +4,7 @@ before:
     - go mod download
     - go vet ./...
     - go test ./...
+    - cp /build/package/docker/entrypoint.sh /entrypoint.sh
 builds:
   - env:
       - CGO_ENABLED=0

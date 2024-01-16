@@ -232,8 +232,8 @@ jobs:
 
       - name: Install Ripgrep
         run: |
-          apt-get -y update
-          apt-get -y install ripgrep
+          sudo apt-get -y update
+          sudo apt-get -y install ripgrep
 
       - name: Run Tests
         run: |

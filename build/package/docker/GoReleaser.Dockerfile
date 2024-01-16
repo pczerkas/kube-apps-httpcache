@@ -23,7 +23,7 @@ RUN         cd /exporter && \
             ln -sf /exporter/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter prometheus_varnish_exporter
 
 COPY        kube-apps-httpcache \
-            build/package/docker/entrypoint.sh \
+            entrypoint.sh \
             /
 
 ENTRYPOINT  [ "/entrypoint.sh" ]
