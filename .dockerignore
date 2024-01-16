@@ -5,6 +5,7 @@
 test/
 build/
 !build/package/docker/entrypoint.sh
+!build/package/docker/act/entrypoint.sh
 chart/
 deploy/
 dist/

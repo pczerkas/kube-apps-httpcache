@@ -104,10 +104,10 @@ func (v *VarnishController) OnApplicationsUpdate(
 
 		go func() {
 			for err := range watchErrors {
-				if err.Error() == "context canceled" {
-					return
-				}
 				if err != nil {
+					if err.Error() == "context canceled" {
+						return
+					}
 					glog.Warningf("error while watching for backend updates: %s", err.Error())
 				}
 			}
