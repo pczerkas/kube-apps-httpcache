@@ -2,8 +2,15 @@
 /.vscode
 /vendor
 /kube-apps-httpcache
+build/act
+build/act.sh
+build/package/docker/act
 dist
+skaffold
 *.vcl
 *.vcl.tmpl
 *.env
 *.docker-compose.override.yml
+.actrc*
+configure-docker-registry-proxy-ca.sh
+configure-squid-ca.sh

@@ -1,8 +1,3 @@
-useStatefulset:
-  # Disable StatefulSet
-  # enabled: false
-  enabled: true
-
 cache:
   applications:
     - label: l001
@@ -64,6 +59,3 @@ vclTemplate: |
           return (deliver);
       }
   }
-
-# cacheExtraArgs: |
-#   - -v=8

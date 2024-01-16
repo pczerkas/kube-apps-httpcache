@@ -146,8 +146,6 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
           - /exporter/prometheus_varnish_exporter
-          args:
-          - -no-exit
           env:
           - name: VSM_NOPID
             value: "1"

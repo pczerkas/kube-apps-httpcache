@@ -22,9 +22,6 @@ func (v *VarnishController) watchConfigUpdates(
 	ctx context.Context,
 	errors chan<- error,
 ) {
-	// TODO:
-	// backendsCtx, backendsCancel := context.WithCancel(context.Background())
-	// backendsCtx, _ := context.WithCancel(context.Background())
 	for {
 		select {
 		case tmplContents := <-v.vclTemplateUpdates:
@@ -51,13 +48,8 @@ func (v *VarnishController) watchConfigUpdates(
 		case newConfig := <-v.applicationsUpdates:
 			glog.Infof("received new applications configuration: %+v", newConfig)
 
-			// TODO: stop old applications watchers?
-			// backendsCancel()
-
 			v.applications = newConfig
 
-			// TODO:
-			// err := v.OnApplicationsUpdate(backendsCtx)
 			err := v.OnApplicationsUpdate(ctx)
 			if err != nil {
 				errors <- err
@@ -76,9 +68,18 @@ func (v *VarnishController) watchConfigUpdates(
 func (v *VarnishController) OnApplicationsUpdate(
 	ctx context.Context,
 ) error {
+	if v.backendsCancel != nil {
+		(*v.backendsCancel)()
+	}
+	backendsCtx, backendsCancel := context.WithCancel(context.Background())
+	v.backendsCancel = &backendsCancel
 	for i := range v.applications.Applications {
 		application := &v.applications.Applications[i]
-		if application.Namespace == "" || application.Service == "" || application.PortName == "" {
+		if application.Label == "" ||
+			application.Namespace == "" ||
+			application.Service == "" ||
+			application.PortName == "" {
+			glog.Infof("skipping application as it is not fully defined")
 			continue
 		}
 		var backendUpdates chan *watcher.EndpointConfig
@@ -90,7 +91,7 @@ func (v *VarnishController) OnApplicationsUpdate(
 			application.PortName,
 			v.retryBackoff,
 		)
-		backendUpdates, backendErrors = backendWatcher.Run(ctx)
+		backendUpdates, backendErrors = backendWatcher.Run(backendsCtx)
 		application.BackendUpdates = backendUpdates
 
 		application.Backend = watcher.NewEndpointConfig()
@@ -99,10 +100,13 @@ func (v *VarnishController) OnApplicationsUpdate(
 		}
 
 		watchErrors := make(chan error)
-		go v.watchBackendUpdates(ctx, application, watchErrors)
+		go v.watchBackendUpdates(backendsCtx, application, watchErrors)
 
 		go func() {
 			for err := range watchErrors {
+				if err.Error() == "context canceled" {
+					return
+				}
 				if err != nil {
 					glog.Warningf("error while watching for backend updates: %s", err.Error())
 				}
@@ -114,6 +118,14 @@ func (v *VarnishController) OnApplicationsUpdate(
 				select {
 				case err := <-backendErrors:
 					glog.Errorf("error while watching backend: %s", err.Error())
+
+				case <-ctx.Done():
+					watchErrors <- ctx.Err()
+					return
+
+				case <-backendsCtx.Done():
+					watchErrors <- backendsCtx.Err()
+					return
 				}
 			}
 		}()

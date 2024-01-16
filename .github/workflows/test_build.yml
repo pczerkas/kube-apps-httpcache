@@ -9,6 +9,17 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  DOCKERFILE: build/package/docker/Dockerfile
+
+  # defines squid proxy to be used during build
+  SQUID_HOST:
+  SQUID_HTTP_PORT:
+  SQUID_HTTPS_PORT:
+  # defines docker registry proxy to be used during build
+  DOCKER_REGISTRY_PROXY_HOST:
+  DOCKER_REGISTRY_PROXY_PORT:
+  # comma separated list of domains to bypass proxy
+  NO_PROXY:
 
 jobs:
   verify_helm:
@@ -71,24 +82,98 @@ jobs:
       REPOSITORY: local/kube-apps-httpcache
       TAG: "ci"
       KIND_CLUSTER_NAME: e2e
+      KIND_NODE_IMAGE: kindest/node:v1.29.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx (on github)
+        if: ${{ !env.ACT }}
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image
+      - name: Set up Docker Buildx (on act, using docker registry proxy and squid proxy)
+        if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST != '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          config-inline: |
+            # registry configures a new Docker register used for cache import or output.
+            debug = true
+            [registry."docker.io"]
+              # mirror configuration to handle path in case a mirror registry requires a /project path rather than just a host:port
+              #mirrors = ["yourmirror.local:5000", "core.harbor.domain/proxy.docker.io"]
+              http = true
+              insecure = true
+              ca=["/etc/squid/CA.pem","/etc/docker-registry-proxy/CA.crt"]
+              #[[registry."docker.io".keypair]]
+              #  key="/etc/config/key.pem"
+              #  cert="/etc/config/cert.pem"
+          driver-opts: |
+            "image=local/buildkit:latest"
+            "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
+            "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
+            "env.no_proxy='${{ env.NO_PROXY }}'"
+
+      - name: Set up Docker Buildx (on act, using docker registry proxy)
+        if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST == '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          config-inline: |
+            # registry configures a new Docker register used for cache import or output.
+            debug = true
+            [registry."docker.io"]
+              # mirror configuration to handle path in case a mirror registry requires a /project path rather than just a host:port
+              #mirrors = ["yourmirror.local:5000", "core.harbor.domain/proxy.docker.io"]
+              http = true
+              insecure = true
+              ca=["/etc/docker-registry-proxy/CA.crt"]
+              #[[registry."docker.io".keypair]]
+              #  key="/etc/config/key.pem"
+              #  cert="/etc/config/cert.pem"
+          driver-opts: |
+            "image=local/buildkit:latest"
+            "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
+            "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
+            "env.no_proxy='${{ env.NO_PROXY }}'"
+
+      - name: Set up Docker Buildx (on act, not using any proxy)
+        if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST == '' && env.SQUID_HOST == '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            "image=local/buildkit:latest"
+
+      - name: Build image (using squid proxy)
+        if: ${{ env.SQUID_HOST != '' }}
         run: |
           DOCKER_BUILDKIT=1 \
-          docker buildx build \
-            -f build/package/docker/Dockerfile \
-            --tag ${REPOSITORY}:${TAG} \
-            --provenance false \
-            --load \
-            .
+            http_proxy=http://${{ env.SQUID_HOST }}:${{ env.SQUID_HTTP_PORT }} \
+            https_proxy=http://${{ env.SQUID_HOST }}:${{ env.SQUID_HTTPS_PORT }} \
+            no_proxy=${{ env.NO_PROXY }} \
+            docker buildx build \
+              --progress plain \
+              -f $DOCKERFILE \
+              --build-arg SQUID_HOST=$SQUID_HOST \
+              --build-arg SQUID_HTTP_PORT=$SQUID_HTTP_PORT \
+              --build-arg SQUID_HTTPS_PORT=$SQUID_HTTPS_PORT \
+              --build-arg NO_PROXY=$NO_PROXY \
+              --tag $REPOSITORY:$TAG \
+              --provenance false \
+              --load \
+              .
+
+      - name: Build image (not using squid proxy)
+        if: ${{ env.SQUID_HOST == '' }}
+        run: |
+          DOCKER_BUILDKIT=1 \
+            docker buildx build \
+              --progress plain \
+              -f $DOCKERFILE \
+              --tag $REPOSITORY:$TAG \
+              --provenance false \
+              --load \
+              .
 
       - name: Set up Helm
         run: |
@@ -99,50 +184,57 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
         with:
-          cluster_name: ${{env.KIND_CLUSTER_NAME}}
+          cluster_name: ${{ env.KIND_CLUSTER_NAME }}
           version: v0.20.0
           config: build/ci/kind-config.yaml
+          node_image: ${{ env.KIND_NODE_IMAGE }}
+          verbosity: 99
 
       - name: Install test backend
         run: |
+          kubectl get nodes
+          kubectl get events -A --sort-by='.metadata.creationTimestamp'
+
           kubectl apply \
-            -f test/test.yaml
+            -f test/test-backend.yaml
+
+          sleep 10
+
+          kubectl wait \
+            pods --selector app=test-backend \
+            --for condition=Ready \
+            --timeout=1m30s \
+          || \
+            {
+              kubectl get events -A --sort-by='.metadata.creationTimestamp' \
+              && kubectl get pods -A -o wide \
+              && exit 1; \
+            }
+
+          kubectl get events -A --sort-by='.metadata.creationTimestamp'
 
       - name: Install Helm chart
         run: |
           docker images
           kind load docker-image $REPOSITORY:$TAG --name $KIND_CLUSTER_NAME
-          #image_sha=$(docker inspect --format='{{index .Id}}' ${REPOSITORY}:${TAG} | cut -d':' -f 2)
-          #kind load docker-image $REPOSITORY:$image_sha --name $KIND_CLUSTER_NAME
 
           /tmp/helm install \
             -f test/chart-values.yaml \
-            -f build/ci/chart-values.yaml \
+            -f build/ci/chart-values-override.yaml \
             kube-apps-httpcache \
             ./chart/kube-apps-httpcache \
             --timeout 7m0s \
             --wait \
             --debug
-            #--set-string image.tag=$image_sha \
+
+          kubectl get pods -A
+          kubectl get events -A --sort-by='.metadata.creationTimestamp'
 
       - name: Install Ripgrep
         run: |
-          sudo apt-get install ripgrep
+          apt-get -y update
+          apt-get -y install ripgrep
 
-      - name: Test
+      - name: Run Tests
         run: |
-          sleep 10
-
-          #kubectl logs deployment/kube-apps-httpcache
-          #kubectl get events --field-selector involvedObject.name=kube-apps-httpcache
-          kubectl get events --field-selector type!=Normal -A
-
-          kubectl port-forward \
-            service/kube-apps-httpcache \
-            4503:80 \
-            2>&1 >/dev/null &
-          sleep 10
-
-          echo 'Checking response from test-app1.com'
-          curl -v -H 'Host: test-app1.com' localhost:4503 2>&1 \
-            | rg --passthru '"hostname":"test-app1.com"'
+          build/ci/tests/e2e.sh

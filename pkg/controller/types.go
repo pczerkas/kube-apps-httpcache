@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"io"
 	"os"
 	"text/template"
@@ -41,6 +42,7 @@ type VarnishController struct {
 
 	applicationsUpdates chan *watcher.ApplicationConfig
 	applications        *watcher.ApplicationConfig
+	backendsCancel      *context.CancelFunc
 
 	varnishSignaller *signaller.Signaller
 	configFile       string

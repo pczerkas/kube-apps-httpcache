@@ -1,0 +1,14 @@
+image:
+  repository: local/kube-apps-httpcache
+  pullPolicy: Never
+  tag: "ci"
+
+useStatefulset:
+  # Disable StatefulSet, use Deployment
+  enabled: false
+
+logging:
+  enabled: true
+
+exporter:
+  enabled: true

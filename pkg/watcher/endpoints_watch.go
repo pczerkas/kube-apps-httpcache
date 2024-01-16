@@ -22,6 +22,10 @@ func (v *EndpointWatcher) Run(ctx context.Context) (chan *EndpointConfig, chan e
 
 func (v *EndpointWatcher) watch(ctx context.Context, updates chan *EndpointConfig, errors chan error) {
 	for {
+		if ctx.Err() != nil {
+			return
+		}
+
 		w, err := v.client.CoreV1().Endpoints(v.namespace).Watch(ctx, metav1.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("metadata.name", v.serviceName).String(),
 		})
@@ -36,6 +40,10 @@ func (v *EndpointWatcher) watch(ctx context.Context, updates chan *EndpointConfi
 
 		c := w.ResultChan()
 		for ev := range c {
+			if ctx.Err() != nil {
+				return
+			}
+
 			if ev.Type == watch.Error {
 				glog.Warningf("error while watching: %+v", ev.Object)
 				continue

@@ -22,7 +22,8 @@ RUN         apt-get -qq update && apt-get -qq upgrade && apt-get -qq install cur
             apt-get -qq autoremove && apt-get -qq autoclean && \
             rm -rf /var/cache/*
 
-RUN         mkdir /exporter && chown varnish /exporter
+RUN         mkdir /exporter \
+            && chown varnish /exporter
 
 ADD         --chown=varnish https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${EXPORTER_VERSION}/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64.tar.gz /tmp
 
@@ -30,6 +31,9 @@ RUN         cd /exporter && \
             tar -xzf /tmp/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64.tar.gz && \
             ln -sf /exporter/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter prometheus_varnish_exporter
 
-COPY        --from=builder /workspace/kube-apps-httpcache .
+COPY        --from=builder \
+                /workspace/kube-apps-httpcache \
+                /workspace/build/package/docker/entrypoint.sh \
+                /
 
-ENTRYPOINT  [ "/kube-apps-httpcache" ]
+ENTRYPOINT  [ "/entrypoint.sh" ]

@@ -14,7 +14,7 @@ This guide explains how to build the kube-apps-httpcache Docker image locally an
 2. Deploy an example backend workload:
 
     ```
-    $ kubectl apply -f examples/test.yaml
+    $ kubectl apply -f examples/test-backend.yaml
     ```
 
 3. Deploy Helm chart with example configuration:

@@ -406,13 +406,13 @@ You can use the [Helm chart](chart/kube-apps-httpcache/) to rollout an instance 
 ```
 $ helm repo add kube-apps-httpcache https://pczerkas.github.io/kube-apps-httpcache
 $ helm install -f test/chart-values.yaml kube-apps-httpcache kube-apps-httpcache/kube-apps-httpcache
-$ kubectl apply -f test/test.yaml
+$ kubectl apply -f test/test-backend.yaml
 
 $ kubectl port-forward service/kube-apps-httpcache 4503:80 2>&1 >/dev/null &
 $ curl -v -H 'Host: test-app1.com' localhost:4503
 
 $ kill $(ps a |grep service/kube-apps-httpcach[e] |cut -d' ' -f1)
-$ kubectl delete -f test/test.yaml
+$ kubectl delete -f test/test-backend.yaml
 $ helm delete kube-apps-httpcache
 ```
 

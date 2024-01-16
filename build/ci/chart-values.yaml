@@ -1,8 +1,0 @@
-image:
-  repository: local/kube-apps-httpcache
-  pullPolicy: Never
-  tag: "ci"
-
-# useStatefulset:
-#   # Disable StatefulSet
-#   enabled: false
