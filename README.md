@@ -33,7 +33,7 @@ This repository contains a controller that allows you to operate a [Varnish cach
 
 This controller is not intended to be a replacement of a regular [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/). Instead, it is intended to be used between your regular Ingress controller and your application's service.
 
-```
+```text
 ┌─────────┐       ┌─────────┐       ┌─────────────┐
 | Ingress | ----> | Varnish | ----> | Application |
 └─────────┘       └─────────┘       └─────────────┘
@@ -54,7 +54,7 @@ The controller does not ship with any preconfigured configuration; the upstream 
 
 It can run in high avalability mode using multiple Varnish and application pods.
 
-```
+```text
              ┌─────────┐
              │ Ingress │
              └────┬────┘
@@ -189,7 +189,7 @@ service.
 
 Create a `Secret` object that contains the secret for the Varnish administration port:
 
-```
+```bash
 $ kubectl create secret generic varnish-secret --from-literal=secret=$(head -c32 /dev/urandom  | base64)
 ```
 
@@ -197,7 +197,7 @@ $ kubectl create secret generic varnish-secret --from-literal=secret=$(head -c32
 
 If RBAC is enabled in your cluster, you will need to create a `ServiceAccount` with a respective `Role`.
 
-```
+```bash
 $ kubectl create serviceaccount kube-apps-httpcache
 $ kubectl apply -f https://raw.githubusercontent.com/pczerkas/kube-apps-httpcache/master/deploy/kubernetes/rbac.yaml
 $ kubectl create rolebinding kube-apps-httpcache --clusterrole=kube-apps-httpcache --serviceaccount=kube-apps-httpcache
@@ -403,7 +403,7 @@ When starting kube-apps-httpcache, remember to set the `--applications-watch=fal
 
 You can use the [Helm chart](chart/kube-apps-httpcache/) to rollout an instance of kube-apps-httpcache. Helm chart [Home page](https://pczerkas.github.io/kube-apps-httpcache/)
 
-```
+```bash
 $ helm repo add kube-apps-httpcache https://pczerkas.github.io/kube-apps-httpcache
 $ helm install -f test/chart-values.yaml kube-apps-httpcache kube-apps-httpcache/kube-apps-httpcache
 $ kubectl apply -f test/test-backend.yaml
@@ -420,7 +420,7 @@ For possible values, have a look at the comments in the provided [`values.yaml` 
 
 Ensure your defined backend services have a port named `http`:
 
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -437,7 +437,7 @@ spec:
 An ingress points to the kube-apps-httpcache service which cached
 your backend service:
 
-```
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -466,6 +466,6 @@ as initContainer if your ruleset is really big.
 
 A Dockerfile for building the container image yourself is located in `build/package/docker`. Invoke `docker build` as follows:
 
-```
+```bash
 $ docker build -t $IMAGE_NAME -f build/package/docker/Dockerfile .
 ```
