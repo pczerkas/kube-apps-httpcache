@@ -1,8 +1,8 @@
-# Varnish on Kubernetes
+# Varnish on Kubernetes for multiple applications
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/pczerkas/kube-apps-httpcache/test_build.yml?branch=master)
 
-This repository contains a controller that allows you to operate a [Varnish cache](https://varnish-cache.org/) on Kubernetes.
+This repository contains a controller that allows you to operate one [Varnish cache](https://varnish-cache.org/) on Kubernetes for multiple applications (services) simultaneously.
 
 ---
 
