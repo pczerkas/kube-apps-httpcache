@@ -59,7 +59,7 @@ jobs:
       - name: Test Docker image
         run: |
           # should panic when running outside of Kubernetes
-          output=$(docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest 2>&1)
+          output=$(docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest 2>&1 || true)
           echo "$output" \
             | rg --passthru 'panic: unable to load in-cluster configuration'
 
