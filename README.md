@@ -1,3 +1,5 @@
+# Helm Chart for [kube-apps-httpcache](https://github.com/pczerkas/kube-apps-httpcache)
+
 ## Usage
 
 [Helm](https://helm.sh) must be installed to use the charts.
