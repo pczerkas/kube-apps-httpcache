@@ -1,13 +1,10 @@
 Ensure your backend-service has a port name 'http' and create an ingress
 points to the '{{ include "kube-apps-httpcache.fullname" . }}' service. Enjoy your Varnish cache!
 
-{{- if and (.Values.rbac.enabled) (.Values.cache.backendServiceNamespace) }}
-{{- if (ne .Values.cache.backendServiceNamespace .Release.Namespace) }}
+{{- if and (.Values.rbac.enabled) }}
 
 ATTENTION REQUIRED:
-Your backend service is configured as {{ .Values.cache.backendServiceNamespace }}/{{ .Values.cache.backendService}} and is in a different namespace
-than your Helm release ({{ .Release.Namespace}}). To be able to watch the endpoints of this service,
-the '{{ include "kube-apps-httpcache.serviceAccountName" . }}' service account will need to be granted WATCH access
-to the "endpoints" resource in the namespace '{{ .Values.cache.backendServiceNamespace }}' using RBAC.
-{{- end }}
+If any of your applications backend service is in a different namespace than your Helm release ({{ .Release.Namespace}}),
+to be able to watch the endpoints of this service, the '{{ include "kube-apps-httpcache.serviceAccountName" . }}' service
+account will need to be granted WATCH access to the "endpoints" resource in the application's namespace using RBAC.
 {{- end }}

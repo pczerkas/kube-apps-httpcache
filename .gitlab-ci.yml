@@ -1,0 +1,143 @@
+stages:
+  - create_release_on_tag
+  - test_build
+
+variables:
+  CI_IMAGE_UBUNTU: ubuntu:latest@sha256:cb2af41f42b9c9bc9bcdc7cf1735e3c4b3d95b2137be86fd940373471a34c8b0
+  CI_IMAGE_DOCKER_GIT: docker:24.0.7-git@sha256:b8a80830eafd07b770b56156e7b03cda679f836692ed46c73d3ee91dd3c6fa7c
+  CI_IMAGE_DIND: docker:24.0.7-dind@sha256:836fe869d6d5c45e231039b86a2ead0ad5ade0ad6eb624ac256201264ff347ef
+  CI_IMAGE_GITLAB_ACTIONS: ghcr.io/pczerkas/gitlab-actions:latest
+  CI_IMAGE_ACT_PLATFORM: catthehacker/ubuntu:act-latest@sha256:91af2c9a8e7bcd60f8727b8e9edd5676e3ab0499e2675c16e0cd453a7911a36b
+  CI_IMAGE_BUILDKIT: moby/buildkit:master@sha256:fd17acb9fd5b321401af2187b64c098cb28c2f7ce1749c8540f5f01ff5b32124
+  MAIN_DOCKERFILE: build/package/docker/Dockerfile
+  KIND_NODE_IMAGE: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+
+.common_gcl_before_script: &common_gcl_before_script
+  - |
+    # needed by gcl
+    if [ "$GITLAB_CI" = "false" ]; then sleep 2; fi
+
+.common_docker_load_script: &common_docker_load_script
+  - |
+    if [ "$GITLAB_CI" = "false" ]; then
+      echo "Step: Load images from host docker into dind"
+      DOCKER_HOST=unix:///var/run/docker-host.sock \
+        docker save \
+          $CI_IMAGE_ACT_PLATFORM \
+          $CI_IMAGE_BUILDKIT \
+          $KIND_NODE_IMAGE \
+      | \
+      docker load
+    fi
+
+.common_act_default_args_script: &common_act_default_args_script
+  - |
+    # fix GitLab's non-symbolic-ref HEAD
+    #git checkout -B "$CI_COMMIT_REF_NAME" "$CI_COMMIT_SHA"
+
+    act_default_args=(
+      --platform ubuntu-latest=$CI_IMAGE_ACT_PLATFORM
+      --env MAIN_DOCKERFILE=$MAIN_DOCKERFILE
+      --env IMAGE_BUILDKIT=$CI_IMAGE_BUILDKIT
+      --env KIND_NODE_IMAGE=$KIND_NODE_IMAGE
+      --pull=false
+      --use-gitignore=false
+      --rebuild=false
+      --privileged
+      --verbose
+      --rm
+    )
+    if [ -n "$DOCKER_REGISTRY_PROXY_HOST" ]; then
+      act_default_args+=(
+        --env DOCKER_REGISTRY_PROXY_HOST="$DOCKER_REGISTRY_PROXY_HOST"
+        --env DOCKER_REGISTRY_PROXY_PORT="$DOCKER_REGISTRY_PROXY_PORT"
+        --env NO_PROXY="$NO_PROXY"
+        --env no_proxy="$NO_PROXY"
+      )
+    fi
+    if [ -n "$SQUID_HOST" ]; then
+      act_default_args+=(
+        --env SQUID_HOST="$SQUID_HOST"
+        --env SQUID_HTTP_PORT="$SQUID_HTTP_PORT"
+        --env SQUID_HTTPS_PORT="$SQUID_HTTPS_PORT"
+        --env NO_PROXY="$NO_PROXY"
+        --env http_proxy="http://$SQUID_HOST:$SQUID_HTTP_PORT"
+        --env https_proxy="http://$SQUID_HOST:$SQUID_HTTPS_PORT"
+        --env no_proxy="$NO_PROXY"
+      )
+    fi
+
+.common_job: &common_job
+  image:
+    name: $CI_IMAGE_GITLAB_ACTIONS
+    pull_policy: if-not-present
+  services:
+    - name: $CI_IMAGE_DIND
+      command: ["--tls=false"] # to ommit 15s delay
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - *common_gcl_before_script
+
+.common_stage_create_release_on_tag_job: &common_stage_create_release_on_tag_job
+  <<: *common_job
+  stage: create_release_on_tag
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
+
+.common_stage_test_build_job: &common_stage_test_build_job
+  <<: *common_job
+  stage: test_build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: manual
+
+build_and_release:
+  <<: *common_stage_create_release_on_tag_job
+  script:
+    - *common_docker_load_script
+    - *common_act_default_args_script
+    - |
+      act \
+        "${act_default_args[@]}" \
+        --workflows .github/workflows/release_tags.yml \
+        --job build_and_release
+
+verify_helm:
+  <<: *common_stage_test_build_job
+  script:
+    - *common_act_default_args_script
+    - |
+      act \
+        "${act_default_args[@]}" \
+        --workflows .github/workflows/test_build.yml \
+        --job verify_helm
+
+verify_build:
+  <<: *common_stage_test_build_job
+  script:
+    - *common_docker_load_script
+    - *common_act_default_args_script
+    - |
+      act \
+        "${act_default_args[@]}" \
+        --workflows .github/workflows/test_build.yml \
+        --job verify_build
+
+e2e:
+  <<: *common_stage_test_build_job
+  script:
+    - *common_docker_load_script
+    - *common_act_default_args_script
+    - |
+      act \
+        "${act_default_args[@]}" \
+        --workflows .github/workflows/test_build.yml \
+        --job e2e

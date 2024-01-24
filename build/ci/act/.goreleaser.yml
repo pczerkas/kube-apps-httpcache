@@ -1,5 +1,12 @@
 project_name: kube-apps-httpcache
 env:
+    # envs for system wide and docker registry proxy
+    - SQUID_HOST={{ .Env.SQUID_HOST }}
+    - SQUID_HTTP_PORT={{ .Env.SQUID_HTTP_PORT }}
+    - SQUID_HTTPS_PORT={{ .Env.SQUID_HTTPS_PORT }}
+    - DOCKER_REGISTRY_PROXY_HOST={{ .Env.DOCKER_REGISTRY_PROXY_HOST }}
+    - DOCKER_REGISTRY_PROXY_PORT={{ .Env.DOCKER_REGISTRY_PROXY_PORT }}
+    - NO_PROXY={{ .Env.NO_PROXY }}
     - CACHEBUST={{ .Env.CACHEBUST }}
 before:
   hooks:
@@ -27,6 +34,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+archives:
+  - format: binary
 dockers:
   -
     image_templates:
@@ -36,12 +45,20 @@ dockers:
       - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-amd64
       - ghcr.io/pczerkas/kube-apps-httpcache:stable-amd64
     use: buildx
-    dockerfile: build/package/docker/GoReleaser.Dockerfile
+    dockerfile: build/package/docker/act/GoReleaser.Dockerfile
     extra_files:
-      - build/package/docker/entrypoint.sh
+      - build/package/docker/act/entrypoint.sh
+      - debug/configure-docker-registry-proxy-ca.sh
+      - debug/configure-squid-ca.sh
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--build-arg=ARCH=amd64/"
+      - "--build-arg=SQUID_HOST={{ .Env.SQUID_HOST }}"
+      - "--build-arg=SQUID_HTTP_PORT={{ .Env.SQUID_HTTP_PORT }}"
+      - "--build-arg=SQUID_HTTPS_PORT={{ .Env.SQUID_HTTPS_PORT }}"
+      - "--build-arg=DOCKER_REGISTRY_PROXY_HOST={{ .Env.DOCKER_REGISTRY_PROXY_HOST }}"
+      - "--build-arg=DOCKER_REGISTRY_PROXY_PORT={{ .Env.DOCKER_REGISTRY_PROXY_PORT }}"
+      - "--build-arg=NO_PROXY={{ .Env.NO_PROXY }}"
       - "--build-arg=CACHEBUST={{ .Env.CACHEBUST }}"
     ids:
       - kube-apps-httpcache
@@ -56,12 +73,20 @@ dockers:
       - ghcr.io/pczerkas/kube-apps-httpcache:{{ .Tag }}-arm64
       - ghcr.io/pczerkas/kube-apps-httpcache:stable-arm64
     use: buildx
-    dockerfile: build/package/docker/GoReleaser.Dockerfile
+    dockerfile: build/package/docker/act/GoReleaser.Dockerfile
     extra_files:
-      - build/package/docker/entrypoint.sh
+      - build/package/docker/act/entrypoint.sh
+      - debug/configure-docker-registry-proxy-ca.sh
+      - debug/configure-squid-ca.sh
     build_flag_templates:
       - "--platform=linux/arm64/v8"
       - "--build-arg=ARCH=arm64v8/"
+      - "--build-arg=SQUID_HOST={{ .Env.SQUID_HOST }}"
+      - "--build-arg=SQUID_HTTP_PORT={{ .Env.SQUID_HTTP_PORT }}"
+      - "--build-arg=SQUID_HTTPS_PORT={{ .Env.SQUID_HTTPS_PORT }}"
+      - "--build-arg=DOCKER_REGISTRY_PROXY_HOST={{ .Env.DOCKER_REGISTRY_PROXY_HOST }}"
+      - "--build-arg=DOCKER_REGISTRY_PROXY_PORT={{ .Env.DOCKER_REGISTRY_PROXY_PORT }}"
+      - "--build-arg=NO_PROXY={{ .Env.NO_PROXY }}"
       - "--build-arg=CACHEBUST={{ .Env.CACHEBUST }}"
     ids:
       - kube-apps-httpcache

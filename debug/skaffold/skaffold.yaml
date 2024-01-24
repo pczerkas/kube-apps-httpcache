@@ -1,0 +1,58 @@
+apiVersion: skaffold/v4beta8
+kind: Config
+metadata:
+  name: kube-apps-httpcache
+
+build:
+  # hooks:
+  #   before:
+  artifacts:
+    - image: local/kube-apps-httpcache
+      hooks:
+        before:
+          - command: ["/bin/bash", "free_space.sh"]
+          - command: ["/bin/bash", "prepare_dockerfiles.sh"]
+          - command: ["/bin/bash", "build_base_image.sh", "0"]
+          - command: ["/bin/bash", "build_kind_base_image.sh", "0"]
+
+      context: ../..
+
+      docker:
+        dockerfile: build/package/docker/Dockerfile.debug
+        buildArgs:
+          SQUID_HOST: "{{ .SQUID_HOST }}"
+          SQUID_HTTP_PORT: "{{ .SQUID_HTTP_PORT }}"
+          SQUID_HTTPS_PORT: "{{ .SQUID_HTTPS_PORT }}"
+          DOCKER_REGISTRY_PROXY_HOST: "{{ .DOCKER_REGISTRY_PROXY_HOST }}"
+          DOCKER_REGISTRY_PROXY_PORT: "{{ .DOCKER_REGISTRY_PROXY_PORT }}"
+          NO_PROXY: "{{ .NO_PROXY }}"
+  tagPolicy:
+    sha256: {}
+
+deploy:
+  helm:
+    releases:
+      - name: kube-apps-httpcache
+
+        setValueTemplates:
+          image.repository: "{{ .IMAGE_REPO_local_kube_apps_httpcache }}"
+          image.tag: "{{ .IMAGE_TAG_local_kube_apps_httpcache }}@{{ .IMAGE_DIGEST_local_kube_apps_httpcache }}"
+        setValues:
+          image.pullPolicy: "IfNotPresent"
+
+        chartPath: ../../chart/kube-apps-httpcache
+        valuesFiles:
+          - ../../test/test-values.yaml
+          - ./test-values-override.yaml
+        version: 0.9.3
+    hooks:
+      before:
+        - host:
+            command: ["kubectl", "apply", "-f", "../../test/test-backend.yaml"]
+
+portForward:
+  - resourceType: deployment
+    resourceName: kube-apps-httpcache
+    namespace: default
+    port: 56268 # dlv debug port
+    localPort: 56268

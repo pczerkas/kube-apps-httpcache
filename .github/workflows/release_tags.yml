@@ -10,9 +10,11 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build_and_release:
     name: Build and release stable image
     runs-on: ubuntu-latest
+    env:
+      GORELEASER_VERSION: "1.23.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +30,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
+          cache: true
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -43,13 +46,16 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0)
           echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
+      - name: Generate CACHEBUST variable
+        run: echo CACHEBUST=$(date +%s) >> $GITHUB_ENV
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
-        with:
-          version: "1.23.0"
-          args: release -f build/ci/.goreleaser.yml --clean
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
+          CACHEBUST: ${{ env.CACHEBUST }}
+        with:
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release -f build/ci/.goreleaser.yml --clean --debug --verbose
 
       - name: Install Ripgrep
         run: |

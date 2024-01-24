@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Kubernetes: Run/Debug",
+            "type": "cloudcode.kubernetes",
+            "request": "launch",
+            "skaffoldConfig": "${workspaceFolder}/debug/skaffold/skaffold.yaml",
+            "imageRegistry": "local",
+            "watch": true,
+            "cleanUp": true,
+            "portForward": true,
+            "autoStop": false,
+        },
+        {
+            "name": "Kubernetes: Attach to Pod (Go)",
+            "type": "cloudcode.kubernetes",
+            "request": "attach",
+            "language": "Go",
+            "debugPort": 56268,
+            "podSelector": {
+                "app.kubernetes.io/instance": "kube-apps-httpcache",
+                "app.kubernetes.io/name": "kube-apps-httpcache"
+            },
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/workspace",
+        },
+    ]
+}

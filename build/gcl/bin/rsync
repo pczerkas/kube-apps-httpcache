@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+# parse $@ and unset --exclude-from=* argument
+# shellcheck disable=SC2206
+args=($@)
+for (( i=0; i<${#args[@]}; i++ )); do
+  if [[ "${args[$i]}" == "--exclude-from="* ]]; then
+    unset "args[$i]"
+  fi
+done
+
+# call rsync with parsed arguments
+/usr/bin/rsync \
+    "${args[@]}"

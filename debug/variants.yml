@@ -1,0 +1,6 @@
+variants:
+  - name: "base variant"
+    image:
+      name: scratch
+      tag: latest
+    none: none # a bug in dockerfile-templater requires line with some value

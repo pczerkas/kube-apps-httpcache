@@ -9,7 +9,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  DOCKERFILE: build/package/docker/Dockerfile
+  MAIN_DOCKERFILE: build/package/docker/Dockerfile
+  IMAGE_BUILDKIT: moby/buildkit:master@sha256:fd17acb9fd5b321401af2187b64c098cb28c2f7ce1749c8540f5f01ff5b32124
 
   # defines squid proxy to be used during build
   SQUID_HOST:
@@ -29,7 +30,8 @@ jobs:
       matrix:
         helm: [ '3.1.2' ]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Helm
         run: |
@@ -43,9 +45,11 @@ jobs:
       - name: Lint chart
         run: /tmp/helm lint ./chart/kube-apps-httpcache/
 
-  build:
-    name: Build
+  verify_build:
+    name: Verify Build
     runs-on: ubuntu-latest
+    env:
+      GORELEASER_VERSION: "1.23.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,6 +65,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
+          cache: true
 
       - name: Set GoReleaser current tag
         env:
@@ -69,11 +74,37 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0)
           echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
-      - name: Run GoReleaser
+      - name: Generate CACHEBUST variable
+        run: echo CACHEBUST=$(date +%s) >> $GITHUB_ENV
+      - name: Run GoReleaser (on github)
+        if: ${{ !env.ACT }}
         uses: goreleaser/goreleaser-action@v5
+        env:
+          SQUID_HOST: ${{ env.SQUID_HOST }}
+          SQUID_HTTP_PORT: ${{ env.SQUID_HTTP_PORT }}
+          SQUID_HTTPS_PORT: ${{ env.SQUID_HTTPS_PORT }}
+          DOCKER_REGISTRY_PROXY_HOST: ${{ env.DOCKER_REGISTRY_PROXY_HOST }}
+          DOCKER_REGISTRY_PROXY_PORT: ${{ env.DOCKER_REGISTRY_PROXY_PORT }}
+          NO_PROXY: ${{ env.NO_PROXY }}
+          CACHEBUST: ${{ env.CACHEBUST }}
         with:
-          version: "1.23.0"
-          args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean --debug --verbose
+      - name: Run GoReleaser (on act)
+        if: ${{ env.ACT }}
+        uses: goreleaser/goreleaser-action@v5
+        env:
+          SQUID_HOST: ${{ env.SQUID_HOST }}
+          SQUID_HTTP_PORT: ${{ env.SQUID_HTTP_PORT }}
+          SQUID_HTTPS_PORT: ${{ env.SQUID_HTTPS_PORT }}
+          DOCKER_REGISTRY_PROXY_HOST: ${{ env.DOCKER_REGISTRY_PROXY_HOST }}
+          DOCKER_REGISTRY_PROXY_PORT: ${{ env.DOCKER_REGISTRY_PROXY_PORT }}
+          NO_PROXY: ${{ env.NO_PROXY }}
+          CACHEBUST: ${{ env.CACHEBUST }}
+        with:
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release -f build/ci/act/.goreleaser.yml --snapshot --skip=publish --clean --debug --verbose
+
   e2e:
     name: E2E
     runs-on: ubuntu-latest
@@ -82,7 +113,7 @@ jobs:
       REPOSITORY: local/kube-apps-httpcache
       TAG: "ci"
       KIND_CLUSTER_NAME: e2e
-      KIND_NODE_IMAGE: kindest/node:v1.29.0
+      KIND_NODE_IMAGE: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -110,7 +141,7 @@ jobs:
               #  key="/etc/config/key.pem"
               #  cert="/etc/config/cert.pem"
           driver-opts: |
-            "image=local/buildkit:latest"
+            "image=${{ env.IMAGE_BUILDKIT }}"
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
@@ -132,7 +163,7 @@ jobs:
               #  key="/etc/config/key.pem"
               #  cert="/etc/config/cert.pem"
           driver-opts: |
-            "image=local/buildkit:latest"
+            "image=${{ env.IMAGE_BUILDKIT }}"
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
@@ -142,7 +173,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
-            "image=local/buildkit:latest"
+            "image=${{ env.IMAGE_BUILDKIT }}"
 
       - name: Build image (using squid proxy)
         if: ${{ env.SQUID_HOST != '' }}
@@ -153,7 +184,7 @@ jobs:
             no_proxy=${{ env.NO_PROXY }} \
             docker buildx build \
               --progress plain \
-              -f $DOCKERFILE \
+              -f $MAIN_DOCKERFILE \
               --build-arg SQUID_HOST=$SQUID_HOST \
               --build-arg SQUID_HTTP_PORT=$SQUID_HTTP_PORT \
               --build-arg SQUID_HTTPS_PORT=$SQUID_HTTPS_PORT \
@@ -169,7 +200,7 @@ jobs:
           DOCKER_BUILDKIT=1 \
             docker buildx build \
               --progress plain \
-              -f $DOCKERFILE \
+              -f $MAIN_DOCKERFILE \
               --tag $REPOSITORY:$TAG \
               --provenance false \
               --load \
@@ -203,7 +234,7 @@ jobs:
           kubectl wait \
             pods --selector app=test-backend \
             --for condition=Ready \
-            --timeout=1m30s \
+            --timeout=5m30s \
           || \
             {
               kubectl get events -A --sort-by='.metadata.creationTimestamp' \
