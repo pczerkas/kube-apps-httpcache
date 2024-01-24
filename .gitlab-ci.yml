@@ -70,7 +70,8 @@ variables:
 .common_job: &common_job
   image:
     name: $CI_IMAGE_GITLAB_ACTIONS
-    pull_policy: if-not-present
+    # pull_policy: if-not-present
+    pull_policy: always
   services:
     - name: $CI_IMAGE_DIND
       command: ["--tls=false"] # to ommit 15s delay
