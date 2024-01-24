@@ -2,6 +2,19 @@ apiVersion: v1
 entries:
   kube-apps-httpcache:
   - apiVersion: v2
+    appVersion: v0.9.3
+    created: "2024-01-24T20:47:12.781652929Z"
+    description: Varnish on Kubernetes for multiple applications Helm Chart
+    digest: 0d1723c5c806a2cc5e57414f9a8424b0d64ab92cd7dc28a20c90f89b6be64d1e
+    home: https://varnish-cache.org
+    icon: https://varnish-cache.org/_static/varnish-bunny.png
+    name: kube-apps-httpcache
+    sources:
+    - https://github.com/pczerkas/kube-apps-httpcache
+    urls:
+    - https://github.com/pczerkas/kube-apps-httpcache/releases/download/kube-apps-httpcache-0.9.3/kube-apps-httpcache-0.9.3.tgz
+    version: 0.9.3
+  - apiVersion: v2
     appVersion: v0.9.1
     created: "2024-01-17T07:59:10.813304486Z"
     description: Varnish on Kubernetes for multiple applications Helm Chart
@@ -66,4 +79,4 @@ entries:
     urls:
     - https://github.com/pczerkas/kube-apps-httpcache/releases/download/kube-apps-httpcache-0.8.7/kube-apps-httpcache-0.8.7.tgz
     version: 0.8.7
-generated: "2024-01-17T07:59:10.813359259Z"
+generated: "2024-01-24T20:47:12.781892211Z"
