@@ -35,7 +35,7 @@ variables:
 .common_act_default_args_script: &common_act_default_args_script
   - |
     # fix GitLab's non-symbolic-ref HEAD
-    #git checkout -B "$CI_COMMIT_REF_NAME" "$CI_COMMIT_SHA"
+    git checkout -B "$CI_COMMIT_REF_NAME" "$CI_COMMIT_SHA"
 
     act_default_args=(
       --platform ubuntu-latest=$CI_IMAGE_ACT_PLATFORM
