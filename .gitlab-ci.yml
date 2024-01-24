@@ -12,6 +12,8 @@ variables:
   MAIN_DOCKERFILE: build/package/docker/Dockerfile
   KIND_NODE_IMAGE: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
 
+  CI_DEBUG_SERVICES: "true"
+
 .common_gcl_before_script: &common_gcl_before_script
   - |
     # needed by gcl
