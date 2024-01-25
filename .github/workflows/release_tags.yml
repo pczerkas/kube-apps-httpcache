@@ -48,10 +48,21 @@ jobs:
         run: |
           echo "REPOSITORY_NAME: ${REPOSITORY_NAME}"
           echo "REPOSITORY_OWNER: ${REPOSITORY_OWNER}"
+
+          # gitlab needs some more parsing
+          if [[ "${{ env.GITLAB_CI }}" == "true" ]]; then
+            # parse "https://gitlab-ci-token:[MASKED]@gitlab.com/user/repository.git" to get only "user/repository"
+            REPOSITORY_NAME=${REPOSITORY_NAME#*//*gitlab\.com/}
+            REPOSITORY_NAME=${REPOSITORY_NAME%*.git}
+            REPOSITORY_OWNER=${REPOSITORY_NAME%/*}
+          fi
+
           REPOSITORY_SHORT_NAME=${REPOSITORY_NAME//${REPOSITORY_OWNER}\//}
           echo "REPOSITORY_SHORT_NAME: ${REPOSITORY_SHORT_NAME}"
+
           LATEST_TAG=$(git describe --tags --abbrev=0)
           echo "LATEST_TAG: ${LATEST_TAG}"
+
           echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_SHORT_NAME}\-/v}" >> "$GITHUB_ENV"
           echo "GITHUB_ENV: BEGIN"
           cat ${GITHUB_ENV}
