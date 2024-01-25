@@ -3,6 +3,7 @@ FROM        ${ARCH}debian:bookworm-slim
 
 ARG CACHEBUST
 {{ template "configure_system_wide_proxy" }}
+{{ template "utilities_for_debugging" }}
 
 ENV         EXPORTER_VERSION=1.6.1
 LABEL       MAINTAINER="Przemek Czerkas <pczerkas@gmail.com>"

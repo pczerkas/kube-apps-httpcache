@@ -48,7 +48,7 @@ dockers:
     dockerfile: build/package/docker/act/GoReleaser.Dockerfile
     extra_files:
       - build/package/docker/act/entrypoint.sh
-      - debug/configure-docker-registry-proxy-ca.sh
+      - debug/ca/.gitkeep
       - debug/configure-squid-ca.sh
     build_flag_templates:
       - "--platform=linux/amd64"
@@ -76,7 +76,7 @@ dockers:
     dockerfile: build/package/docker/act/GoReleaser.Dockerfile
     extra_files:
       - build/package/docker/act/entrypoint.sh
-      - debug/configure-docker-registry-proxy-ca.sh
+      - debug/ca/.gitkeep
       - debug/configure-squid-ca.sh
     build_flag_templates:
       - "--platform=linux/arm64/v8"

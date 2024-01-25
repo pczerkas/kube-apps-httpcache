@@ -9,6 +9,7 @@
 !/build/package/docker/act/entrypoint.sh
 /chart
 /debug
+!/debug/ca/.gitkeep
 !/debug/ca/docker-registry-proxy-ca.crt
 !/debug/ca/squid-ca.pem
 !/debug/skaffold/build/package/docker

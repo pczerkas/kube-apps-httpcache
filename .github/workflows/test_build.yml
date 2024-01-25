@@ -69,23 +69,26 @@ jobs:
 
       - name: Set GoReleaser current tag
         env:
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          REPOSITORY_NAME: ${{ github.repository }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
         # chart-releaser latest tag has non-semver format, need to convert it
         run: |
+          echo "REPOSITORY_NAME: ${REPOSITORY_NAME}"
+          echo "REPOSITORY_OWNER: ${REPOSITORY_OWNER}"
+          REPOSITORY_SHORT_NAME=${REPOSITORY_NAME//${REPOSITORY_OWNER}\//}
+          echo "REPOSITORY_SHORT_NAME: ${REPOSITORY_SHORT_NAME}"
           LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_NAME}\-/v}" >> "$GITHUB_ENV"
+          echo "LATEST_TAG: ${LATEST_TAG}"
+          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_SHORT_NAME}\-/v}" >> "$GITHUB_ENV"
+          echo "GITHUB_ENV: BEGIN"
+          cat ${GITHUB_ENV}
+          echo "GITHUB_ENV: END"
       - name: Generate CACHEBUST variable
         run: echo CACHEBUST=$(date +%s) >> $GITHUB_ENV
       - name: Run GoReleaser (on github)
         if: ${{ !env.ACT }}
         uses: goreleaser/goreleaser-action@v5
         env:
-          SQUID_HOST: ${{ env.SQUID_HOST }}
-          SQUID_HTTP_PORT: ${{ env.SQUID_HTTP_PORT }}
-          SQUID_HTTPS_PORT: ${{ env.SQUID_HTTPS_PORT }}
-          DOCKER_REGISTRY_PROXY_HOST: ${{ env.DOCKER_REGISTRY_PROXY_HOST }}
-          DOCKER_REGISTRY_PROXY_PORT: ${{ env.DOCKER_REGISTRY_PROXY_PORT }}
-          NO_PROXY: ${{ env.NO_PROXY }}
           CACHEBUST: ${{ env.CACHEBUST }}
         with:
           version: ${{ env.GORELEASER_VERSION }}
