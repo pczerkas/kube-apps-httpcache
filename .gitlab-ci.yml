@@ -42,6 +42,7 @@ variables:
       --env MAIN_DOCKERFILE=$MAIN_DOCKERFILE
       --env IMAGE_BUILDKIT=$CI_IMAGE_BUILDKIT
       --env KIND_NODE_IMAGE=$KIND_NODE_IMAGE
+      --env GITLAB_CI=$GITLAB_CI
       --pull=false
       --use-gitignore=false
       --rebuild=false

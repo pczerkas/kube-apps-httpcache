@@ -22,6 +22,8 @@ env:
   # comma separated list of domains to bypass proxy
   NO_PROXY:
 
+  GITLAB_CI:
+
 jobs:
   verify_helm:
     name: Verify Helm chart
@@ -93,8 +95,16 @@ jobs:
         with:
           version: ${{ env.GORELEASER_VERSION }}
           args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean --debug --verbose
-      - name: Run GoReleaser (on act)
-        if: ${{ env.ACT }}
+      - name: Run GoReleaser (on act, on gitlab)
+        if: ${{ env.ACT && env.GITLAB_CI == 'true' }}
+        uses: goreleaser/goreleaser-action@v5
+        env:
+          CACHEBUST: ${{ env.CACHEBUST }}
+        with:
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean --debug --verbose
+      - name: Run GoReleaser (on act, locally)
+        if: ${{ env.ACT && env.GITLAB_CI == 'false' }}
         uses: goreleaser/goreleaser-action@v5
         env:
           SQUID_HOST: ${{ env.SQUID_HOST }}

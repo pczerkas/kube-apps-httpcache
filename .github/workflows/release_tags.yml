@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  GITLAB_CI:
 
 jobs:
   build_and_release:
@@ -57,7 +58,17 @@ jobs:
           echo "GITHUB_ENV: END"
       - name: Generate CACHEBUST variable
         run: echo CACHEBUST=$(date +%s) >> $GITHUB_ENV
-      - name: Run GoReleaser
+      - name: Run GoReleaser (on github)
+        if: ${{ !env.ACT }}
+        uses: goreleaser/goreleaser-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
+          CACHEBUST: ${{ env.CACHEBUST }}
+        with:
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release -f build/ci/.goreleaser.yml --clean --debug --verbose
+      - name: Run GoReleaser (on act, on gitlab)
+        if: ${{ env.ACT && env.GITLAB_CI == 'true' }}
         uses: goreleaser/goreleaser-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_USER_TOKEN }}
