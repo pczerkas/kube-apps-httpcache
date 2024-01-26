@@ -69,33 +69,9 @@ jobs:
           go-version: "1.21"
           cache: true
 
+      # chart-releaser latest tag has non-semver format, need to convert it
       - name: Set GoReleaser current tag
-        env:
-          REPOSITORY_NAME: ${{ github.repository }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        # chart-releaser latest tag has non-semver format, need to convert it
-        run: |
-          echo "REPOSITORY_NAME: ${REPOSITORY_NAME}"
-          echo "REPOSITORY_OWNER: ${REPOSITORY_OWNER}"
-
-          # gitlab needs some more parsing
-          if [[ "${{ env.GITLAB_CI }}" == "true" ]]; then
-            # parse "https://gitlab-ci-token:[MASKED]@gitlab.com/user/repository.git" to get only "user/repository"
-            REPOSITORY_NAME=${REPOSITORY_NAME#*//*gitlab\.com/}
-            REPOSITORY_NAME=${REPOSITORY_NAME%*.git}
-            REPOSITORY_OWNER=${REPOSITORY_NAME%/*}
-          fi
-
-          REPOSITORY_SHORT_NAME=${REPOSITORY_NAME//${REPOSITORY_OWNER}\//}
-          echo "REPOSITORY_SHORT_NAME: ${REPOSITORY_SHORT_NAME}"
-
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "LATEST_TAG: ${LATEST_TAG}"
-
-          echo "GORELEASER_CURRENT_TAG=${LATEST_TAG//${REPOSITORY_SHORT_NAME}\-/v}" >> "$GITHUB_ENV"
-          echo "GITHUB_ENV: BEGIN"
-          cat ${GITHUB_ENV}
-          echo "GITHUB_ENV: END"
+        uses: ./.github/actions/set-goreleaser-current-tag
       - name: Generate CACHEBUST variable
         run: echo CACHEBUST=$(date +%s) >> $GITHUB_ENV
       - name: Run GoReleaser (on github)
@@ -115,7 +91,7 @@ jobs:
           version: ${{ env.GORELEASER_VERSION }}
           args: release -f build/ci/.goreleaser.yml --snapshot --skip=publish --clean --debug --verbose
       - name: Run GoReleaser (on act, locally)
-        if: ${{ env.ACT && env.GITLAB_CI == 'false' }}
+        if: ${{ env.ACT && (env.GITLAB_CI == 'false' || !env.GITLAB_CI) }}
         uses: goreleaser/goreleaser-action@v5
         env:
           SQUID_HOST: ${{ env.SQUID_HOST }}
