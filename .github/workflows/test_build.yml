@@ -118,8 +118,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
-          #- macos-latest-large
+          #- macos-latest
+          - macos-latest-large
     runs-on:
       - ${{ matrix.os }}
     env:
