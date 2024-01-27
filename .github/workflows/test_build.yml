@@ -136,16 +136,16 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
-      - name: Set up Docker
+      - name: Set up Docker (on macos)
         if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
         run: |
           brew install docker --cask
           brew install docker-buildx
 
-      - name: Set up Docker Buildx (on github)
+      - name: Set up Docker Buildx (on ubuntu, on github)
         if: ${{ matrix.os == 'ubuntu-latest' && !env.ACT }}
         uses: docker/setup-buildx-action@v3
-      - name: Set up Docker Buildx (on act, using docker registry proxy and squid proxy)
+      - name: Set up Docker Buildx (on ubuntu, on act, using docker registry proxy and squid proxy)
         if: ${{ matrix.os == 'ubuntu-latest' && env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST != '' }}
         uses: docker/setup-buildx-action@v3
         with:
@@ -166,7 +166,7 @@ jobs:
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
-      - name: Set up Docker Buildx (on act, using docker registry proxy)
+      - name: Set up Docker Buildx (on ubuntu, on act, using docker registry proxy)
         if: ${{ matrix.os == 'ubuntu-latest' && env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST == '' }}
         uses: docker/setup-buildx-action@v3
         with:
@@ -187,15 +187,15 @@ jobs:
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
-      - name: Set up Docker Buildx (on act, not using any proxy)
+      - name: Set up Docker Buildx (on ubuntu, on act, not using any proxy)
         if: ${{ matrix.os == 'ubuntu-latest' && env.ACT && env.DOCKER_REGISTRY_PROXY_HOST == '' && env.SQUID_HOST == '' }}
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
             "image=${{ env.IMAGE_BUILDKIT }}"
 
-      - name: Build image (using squid proxy)
-        if: ${{ env.SQUID_HOST != '' }}
+      - name: Build image (on ubuntu, using squid proxy)
+        if: ${{ matrix.os == 'ubuntu-latest' && env.SQUID_HOST != '' }}
         run: |
           DOCKER_BUILDKIT=1 \
             http_proxy=http://${{ env.SQUID_HOST }}:${{ env.SQUID_HTTP_PORT }} \
@@ -212,12 +212,22 @@ jobs:
               --provenance false \
               --load \
               .
-      - name: Build image (not using squid proxy)
-        if: ${{ env.SQUID_HOST == '' }}
+      - name: Build image (on ubuntu, not using squid proxy)
+        if: ${{ matrix.os == 'ubuntu-latest' && env.SQUID_HOST == '' }}
         run: |
           DOCKER_BUILDKIT=1 \
             docker buildx build \
               --progress plain \
+              -f $MAIN_DOCKERFILE \
+              --tag $REPOSITORY:$TAG \
+              --provenance false \
+              --load \
+              .
+      - name: Build image (on macos)
+        if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' && matrix.os == 'ubuntu-latest' }}
+        run: |
+          DOCKER_BUILDKIT=1 \
+            docker buildx build \
               -f $MAIN_DOCKERFILE \
               --tag $REPOSITORY:$TAG \
               --provenance false \
