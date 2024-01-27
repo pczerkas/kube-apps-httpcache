@@ -136,9 +136,11 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
-      # - name: Set up Docker
-      #   if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
-      #   uses: crazy-max/ghaction-setup-docker@v3
+      - name: Set up Docker
+        if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
+        #uses: crazy-max/ghaction-setup-docker@v3
+        run: |
+          brew cask install docker
 
       - name: Set up Docker Buildx (on github)
         if: ${{ !env.ACT }}
