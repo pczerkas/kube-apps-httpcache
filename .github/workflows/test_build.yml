@@ -118,8 +118,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          #- macos-latest
-          - macos-latest-large
+          - macos-latest
     runs-on:
       - ${{ matrix.os }}
     env:
@@ -134,6 +133,10 @@ jobs:
         with:
           fetch-depth: 0
           submodules: 'true'
+
+      - name: Set up Docker
+        if: ${{ matrix.os == 'macos-latest' }}
+        uses: crazy-max/ghaction-setup-docker@v3
 
       - name: Set up Docker Buildx (on github)
         if: ${{ !env.ACT }}

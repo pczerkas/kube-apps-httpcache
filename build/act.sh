@@ -45,8 +45,7 @@ case "$host_arch" in
     matrix_os="ubuntu-latest"
     ;;
   aarch64)
-    #matrix_os="macos-latest"
-    matrix_os="macos-latest-large"
+    matrix_os="macos-latest"
     ;;
   *)
     echo "Unsupported host architecture: $host_arch"
