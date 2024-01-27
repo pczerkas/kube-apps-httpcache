@@ -118,7 +118,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13-xlarge
     runs-on:
       - ${{ matrix.os }}
     env:
@@ -135,7 +135,7 @@ jobs:
           submodules: 'true'
 
       - name: Set up Docker
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13-xlarge' }}
         uses: crazy-max/ghaction-setup-docker@v3
 
       - name: Set up Docker Buildx (on github)
@@ -220,11 +220,10 @@ jobs:
               --load \
               .
 
-      - name: Set up Helm
-        run: |
-          wget https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz -O /tmp/helm.tar.gz
-          tar xzf /tmp/helm.tar.gz -C /tmp --strip-components=1
-          chmod +x /tmp/helm
+      - uses: azure/setup-helm@v3
+        with:
+            version: ${{ env.HELM_VERSION}}
+            token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
@@ -263,7 +262,7 @@ jobs:
           docker images
           kind load docker-image $REPOSITORY:$TAG --name $KIND_CLUSTER_NAME
 
-          /tmp/helm install \
+          helm install \
             -f test/chart-values.yaml \
             -f build/ci/chart-values-override.yaml \
             kube-apps-httpcache \
