@@ -117,9 +117,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          #- ubuntu-latest
+          - ubuntu-latest
           #- flyci-macos-large-latest-m1
-          - flyci-macos-large-latest-m2
+          #- flyci-macos-large-latest-m2
     runs-on:
       - ${{ matrix.os }}
     env:
@@ -136,36 +136,37 @@ jobs:
           submodules: 'true'
 
       #debug
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
-      - name: Set up Docker (on macos)
-        if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
-        run: |
-          brew install docker --cask
+      # TODO: fix this, if possible
+      # - name: Set up Docker (on macos)
+      #   if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
+      #   run: |
+      #     brew install docker --cask
 
-          brew install docker-buildx
-          mkdir -p ~/.docker/cli-plugins
-          ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
+      #     brew install docker-buildx
+      #     mkdir -p ~/.docker/cli-plugins
+      #     ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
 
-          sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
-          DOCKER_HOST=unix:///var/run/docker.sock docker ps # test that it works
+      #     sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
+      #     DOCKER_HOST=unix:///var/run/docker.sock docker ps # test that it works
 
-          # Start Docker.app if not already running
-          if ! pgrep -f Docker.app; then
-            open -a /Applications/Docker.app
-            # Wait for Docker to be ready
-            while ! docker info >/dev/null 2>&1; do sleep 1; done
-          fi
+      #     # Start Docker.app if not already running
+      #     if ! pgrep -f Docker.app; then
+      #       open -a /Applications/Docker.app
+      #       # Wait for Docker to be ready
+      #       while ! docker info >/dev/null 2>&1; do sleep 1; done
+      #     fi
 
-          # brew install docker --cask
-          # #brew install docker docker-compose colima
-          # brew install colima
-          brew services start colima
-          # brew install docker-buildx
-          # mkdir -p ~/.docker/cli-plugins
-          # ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
-          # colima start
+      #     # brew install docker --cask
+      #     # #brew install docker docker-compose colima
+      #     # brew install colima
+      #     brew services start colima
+      #     # brew install docker-buildx
+      #     # mkdir -p ~/.docker/cli-plugins
+      #     # ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
+      #     # colima start
 
       - name: Set up Docker Buildx (on ubuntu, on github)
         if: ${{ matrix.os == 'ubuntu-latest' && !env.ACT }}
@@ -248,18 +249,19 @@ jobs:
               --provenance false \
               --load \
               .
-      - name: Build image (on macos)
-        if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' && matrix.os == 'ubuntu-latest' }}
-        run: |
-          #ls -al /usr/local/lib/docker/cli-plugins/
-          ls -al ~/.docker/cli-plugins/
-          DOCKER_BUILDKIT=1 \
-            docker buildx build \
-              -f $MAIN_DOCKERFILE \
-              --tag $REPOSITORY:$TAG \
-              --provenance false \
-              --load \
-              .
+      # TODO: fix this, if possible
+      # - name: Build image (on macos)
+      #   if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' && matrix.os == 'ubuntu-latest' }}
+      #   run: |
+      #     #ls -al /usr/local/lib/docker/cli-plugins/
+      #     ls -al ~/.docker/cli-plugins/
+      #     DOCKER_BUILDKIT=1 \
+      #       docker buildx build \
+      #         -f $MAIN_DOCKERFILE \
+      #         --tag $REPOSITORY:$TAG \
+      #         --provenance false \
+      #         --load \
+      #         .
 
       - uses: azure/setup-helm@v3
         with:
