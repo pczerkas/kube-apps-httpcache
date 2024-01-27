@@ -61,7 +61,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: 'true'
 
       - name: Set up QEMU
@@ -132,7 +131,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: 'true'
 
       #debug
