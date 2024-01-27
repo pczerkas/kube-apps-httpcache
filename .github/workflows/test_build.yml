@@ -118,9 +118,9 @@ jobs:
       matrix:
         os:
           #- ubuntu-latest
-          #- macos-13-xlarge
+          - macos-13-xlarge
           #- flyci-macos-large-latest-m1
-          - flyci-macos-large-latest-m2
+          #- flyci-macos-large-latest-m2
     runs-on:
       - ${{ matrix.os }}
     env:
@@ -136,6 +136,7 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
+      #debug
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
 
@@ -161,6 +162,7 @@ jobs:
           # brew install docker --cask
           # #brew install docker docker-compose colima
           # brew install colima
+          brew services start colima
           # brew install docker-buildx
           # mkdir -p ~/.docker/cli-plugins
           # ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
