@@ -64,6 +64,9 @@ jobs:
           submodules: 'true'
 
       #debug
+      - name: Update
+        run: |
+          sudo apt-get update
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
 
