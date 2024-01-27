@@ -139,12 +139,20 @@ jobs:
       - name: Set up Docker (on macos)
         if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' }}
         run: |
+          # brew install docker --cask
+          # brew install docker-buildx
+          # mkdir -p ~/.docker/cli-plugins
+          # ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
+          # sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
+          # DOCKER_HOST=unix:///var/run/docker.sock docker ps # test that it works
+
           brew install docker --cask
+          #brew install docker docker-compose colima
+          brew install colima
           brew install docker-buildx
           mkdir -p ~/.docker/cli-plugins
           ln -sfn /opt/homebrew/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
-          sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
-          DOCKER_HOST=unix:///var/run/docker.sock docker ps # test that it works
+          colima start
 
       - name: Set up Docker Buildx (on ubuntu, on github)
         if: ${{ matrix.os == 'ubuntu-latest' && !env.ACT }}
