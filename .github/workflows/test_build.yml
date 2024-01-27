@@ -226,6 +226,7 @@ jobs:
       - name: Build image (on macos)
         if: ${{ matrix.os == 'flyci-macos-large-latest-m1' || matrix.os == 'flyci-macos-large-latest-m2' && matrix.os == 'ubuntu-latest' }}
         run: |
+          ls -al /usr/local/lib/docker/cli-plugins/
           DOCKER_BUILDKIT=1 \
             docker buildx build \
               -f $MAIN_DOCKERFILE \
