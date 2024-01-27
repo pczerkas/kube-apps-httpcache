@@ -3,7 +3,7 @@ set -e
 
 BUILDER_NAME=kind-base-builder
 IMAGE_TAG=local/skaffold-kind:latest
-KIND_NODE_IMAGE=kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+KIND_NODE_IMAGE=kindest/node:v1.29.0
 
 force=${1:-1}
 if [ "$force" -eq 0 ]; then

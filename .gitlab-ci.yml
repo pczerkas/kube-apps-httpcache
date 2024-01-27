@@ -3,14 +3,14 @@ stages:
   - test_build
 
 variables:
-  CI_IMAGE_UBUNTU: ubuntu:latest@sha256:cb2af41f42b9c9bc9bcdc7cf1735e3c4b3d95b2137be86fd940373471a34c8b0
-  CI_IMAGE_DOCKER_GIT: docker:24.0.7-git@sha256:b8a80830eafd07b770b56156e7b03cda679f836692ed46c73d3ee91dd3c6fa7c
-  CI_IMAGE_DIND: docker:24.0.7-dind@sha256:836fe869d6d5c45e231039b86a2ead0ad5ade0ad6eb624ac256201264ff347ef
+  CI_IMAGE_UBUNTU: ubuntu:latest
+  CI_IMAGE_DOCKER_GIT: docker:24.0.7-git
+  CI_IMAGE_DIND: docker:24.0.7-dind
   CI_IMAGE_GITLAB_ACTIONS: ghcr.io/pczerkas/gitlab-actions:latest
-  CI_IMAGE_ACT_PLATFORM: catthehacker/ubuntu:act-latest@sha256:91af2c9a8e7bcd60f8727b8e9edd5676e3ab0499e2675c16e0cd453a7911a36b
-  CI_IMAGE_BUILDKIT: moby/buildkit:master@sha256:fd17acb9fd5b321401af2187b64c098cb28c2f7ce1749c8540f5f01ff5b32124
+  CI_IMAGE_ACT_PLATFORM: catthehacker/ubuntu:act-latest
+  CI_IMAGE_BUILDKIT: moby/buildkit:v0.12.4
   MAIN_DOCKERFILE: build/package/docker/Dockerfile
-  KIND_NODE_IMAGE: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+  KIND_NODE_IMAGE: kindest/node:v1.29.0
 
   CI_DEBUG_SERVICES: "true"
 
@@ -43,6 +43,7 @@ variables:
       --env IMAGE_BUILDKIT=$CI_IMAGE_BUILDKIT
       --env KIND_NODE_IMAGE=$KIND_NODE_IMAGE
       --env GITLAB_CI=$GITLAB_CI
+      --container-options "-v act-toolcache:/opt/hostedtoolcache"
       --pull=false
       --use-gitignore=false
       --rebuild=false

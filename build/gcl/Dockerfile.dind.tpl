@@ -1,4 +1,4 @@
-FROM docker:24.0.7-dind@sha256:836fe869d6d5c45e231039b86a2ead0ad5ade0ad6eb624ac256201264ff347ef
+FROM docker:24.0.7-dind
 
 {{ template "configure_system_wide_proxy" }}
 {{ template "configure_docker_registry_proxy" }}

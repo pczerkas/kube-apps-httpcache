@@ -11,7 +11,10 @@ install-google-cloud-code:
 	code --install-extension googlecloudtools.cloudcode
 
 create-kind-cluster:
-	cd ./skaffold && ./recreate-kind-cluster.sh
+	cd ./skaffold && ./recreate_kind_cluster.sh
 
 delete-kind-cluster:
-	cd ./skaffold && ./delete-kind-cluster.sh
+	cd ./skaffold && ./delete_kind_cluster.sh
+
+tests:
+	../build/ci/tests/e2e.sh

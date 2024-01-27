@@ -18,13 +18,18 @@ RUN         CGO_ENABLED=0 GOOS=linux \
                 -installsuffix cgo \
                 -o kube-apps-httpcache \
                 -a cmd/kube-apps-httpcache/main.go
+RUN         cd exporter \
+            && CGO_ENABLED=0 GOOS=linux \
+                go build \
+                    -gcflags="${SKAFFOLD_GO_GCFLAGS}" \
+                    -installsuffix cgo \
+                    -o prometheus_varnish_exporter
 
-FROM        debian:bookworm-slim@sha256:d6a343a9b7faf367bd975cadb5c9af51874a8ecf1a2b2baa96877d578ac96722 AS final
+FROM        debian:bookworm-slim
 
 {{ template "configure_system_wide_proxy" }}
 {{ template "utilities_for_debugging" }}
 
-ENV         EXPORTER_VERSION=1.6.1
 LABEL       MAINTAINER="Przemek Czerkas <pczerkas@gmail.com>"
 
 WORKDIR     /
@@ -36,17 +41,10 @@ RUN         apt-get -y update && apt-get upgrade && apt-get -y install curl && \
             apt-get -y autoremove && apt-get -y autoclean && \
             rm -rf /var/cache/*
 
-RUN         mkdir /exporter && chown varnish /exporter
-
-ADD         --chown=varnish https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${EXPORTER_VERSION}/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64.tar.gz /tmp
-
-RUN         cd /exporter && \
-            tar -xzf /tmp/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64.tar.gz && \
-            ln -sf /exporter/prometheus_varnish_exporter-${EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter prometheus_varnish_exporter
-
 COPY --from=builder /go/bin/dlv dlv
 COPY        --from=builder \
                 /workspace/kube-apps-httpcache \
+                /workspace/exporter/prometheus_varnish_exporter \
                 /workspace/debug/skaffold/build/package/docker/entrypoint.sh \
                 /
 

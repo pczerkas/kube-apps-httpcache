@@ -10,7 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   MAIN_DOCKERFILE: build/package/docker/Dockerfile
-  IMAGE_BUILDKIT: moby/buildkit:master@sha256:fd17acb9fd5b321401af2187b64c098cb28c2f7ce1749c8540f5f01ff5b32124
+  IMAGE_BUILDKIT: moby/buildkit:v0.12.4
 
   # defines squid proxy to be used during build
   SQUID_HOST:
@@ -30,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        helm: [ '3.1.2' ]
+        helm:
+          - '3.1.2'
+          - '3.14.0'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -107,13 +109,21 @@ jobs:
 
   e2e:
     name: E2E
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          #- macos-latest-large
+    runs-on:
+      - ${{ matrix.os }}
     env:
-      HELM_VERSION: 3.1.2
+      HELM_VERSION: 3.14.0
       REPOSITORY: local/kube-apps-httpcache
       TAG: "ci"
       KIND_CLUSTER_NAME: e2e
-      KIND_NODE_IMAGE: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+      KIND_NODE_IMAGE: kindest/node:v1.29.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -123,7 +133,6 @@ jobs:
       - name: Set up Docker Buildx (on github)
         if: ${{ !env.ACT }}
         uses: docker/setup-buildx-action@v3
-
       - name: Set up Docker Buildx (on act, using docker registry proxy and squid proxy)
         if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST != '' }}
         uses: docker/setup-buildx-action@v3
@@ -145,7 +154,6 @@ jobs:
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
-
       - name: Set up Docker Buildx (on act, using docker registry proxy)
         if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST != '' && env.SQUID_HOST == '' }}
         uses: docker/setup-buildx-action@v3
@@ -167,7 +175,6 @@ jobs:
             "env.http_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.https_proxy=${{ env.DOCKER_REGISTRY_PROXY_HOST }}:${{ env.DOCKER_REGISTRY_PROXY_PORT }}"
             "env.no_proxy='${{ env.NO_PROXY }}'"
-
       - name: Set up Docker Buildx (on act, not using any proxy)
         if: ${{ env.ACT && env.DOCKER_REGISTRY_PROXY_HOST == '' && env.SQUID_HOST == '' }}
         uses: docker/setup-buildx-action@v3
@@ -193,7 +200,6 @@ jobs:
               --provenance false \
               --load \
               .
-
       - name: Build image (not using squid proxy)
         if: ${{ env.SQUID_HOST == '' }}
         run: |

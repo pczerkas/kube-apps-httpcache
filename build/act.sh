@@ -38,17 +38,35 @@ docker run \
     --out.dir build/package/docker/act \
     --out.fmt "GoReleaser.Dockerfile"
 
+host_arch="$(uname -m)"
+echo "host_arch: $host_arch"
+case "$host_arch" in
+  x86_64)
+    matrix_os="ubuntu-latest"
+    ;;
+  aarch64)
+    matrix_os="macos-latest"
+    #matrix_os="macos-latest-large"
+    ;;
+  *)
+    echo "Unsupported host architecture: $host_arch"
+    exit 1
+    ;;
+esac
+
 # act
 act_default_args=(
   --platform ubuntu-latest=local/act-ubuntu:latest
   --env MAIN_DOCKERFILE=build/package/docker/act/Dockerfile
   --env KIND_NODE_IMAGE=local/kind:latest
+  --container-options "-v act-toolcache:/opt/hostedtoolcache"
   --pull=false
   --use-gitignore=false
   --rebuild=false
   --privileged
   --verbose
   --workflows .github/workflows/test_build.yml
+  --matrix os:$matrix_os
   --rm
 )
 if [ -n "$DOCKER_REGISTRY_PROXY_HOST" ]; then

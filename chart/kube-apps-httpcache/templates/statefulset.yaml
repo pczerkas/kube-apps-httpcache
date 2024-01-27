@@ -145,7 +145,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-          - /exporter/prometheus_varnish_exporter
+          - /prometheus_varnish_exporter
           env:
           - name: VSM_NOPID
             value: "1"

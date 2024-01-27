@@ -10,15 +10,25 @@ env:
     - CACHEBUST={{ .Env.CACHEBUST }}
 before:
   hooks:
-    - go mod download
-    - go vet ./...
-    - go test ./...
+    - build/ci/goreleaser_before_hooks.sh
 builds:
-  - env:
+  - id: kube-apps-httpcache
+    env:
       - CGO_ENABLED=0
       - GO111MODULE=on
     binary: kube-apps-httpcache
     main: ./cmd/kube-apps-httpcache/main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+  - id: prometheus-varnish-exporter
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    dir: exporter/
+    binary: prometheus_varnish_exporter
     goos:
       - linux
     goarch:
@@ -62,6 +72,7 @@ dockers:
       - "--build-arg=CACHEBUST={{ .Env.CACHEBUST }}"
     ids:
       - kube-apps-httpcache
+      - prometheus-varnish-exporter
     goos: linux
     goarch: amd64
     goarm: ''
@@ -90,6 +101,7 @@ dockers:
       - "--build-arg=CACHEBUST={{ .Env.CACHEBUST }}"
     ids:
       - kube-apps-httpcache
+      - prometheus-varnish-exporter
     goos: linux
     goarch: arm64
     goarm: ''

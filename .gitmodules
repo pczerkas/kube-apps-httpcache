@@ -1,0 +1,3 @@
+[submodule "exporter"]
+	path = exporter
+	url = https://github.com/pczerkas/prometheus_varnish_exporter.git
