@@ -13,6 +13,7 @@ variables:
   KIND_NODE_IMAGE: kindest/node:v1.29.0
 
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 0
 
   CI_DEBUG_SERVICES: "true"
 
