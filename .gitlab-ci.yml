@@ -44,7 +44,6 @@ variables:
       --env KIND_NODE_IMAGE=$KIND_NODE_IMAGE
       --env GITLAB_CI=$GITLAB_CI
       --container-options "-v act-toolcache:/opt/hostedtoolcache"
-      --no-skip-checkout
       --pull=false
       --use-gitignore=false
       --rebuild=false

@@ -59,7 +59,6 @@ act_default_args=(
   --env MAIN_DOCKERFILE=build/package/docker/act/Dockerfile
   --env KIND_NODE_IMAGE=local/kind:latest
   --container-options "-v act-toolcache:/opt/hostedtoolcache"
-  --no-skip-checkout
   --pull=false
   --use-gitignore=false
   --rebuild=false
