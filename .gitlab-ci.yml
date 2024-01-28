@@ -12,6 +12,8 @@ variables:
   MAIN_DOCKERFILE: build/package/docker/Dockerfile
   KIND_NODE_IMAGE: kindest/node:v1.29.0
 
+  GIT_SUBMODULE_STRATEGY: recursive
+
   CI_DEBUG_SERVICES: "true"
 
 .common_gcl_before_script: &common_gcl_before_script
