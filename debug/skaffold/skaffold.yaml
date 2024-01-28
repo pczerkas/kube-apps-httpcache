@@ -44,7 +44,7 @@ deploy:
         valuesFiles:
           - ../../test/test-values.yaml
           - ./test-values-override.yaml
-        version: 0.9.3
+        version: 0.9.5
     hooks:
       before:
         - host:
