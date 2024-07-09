@@ -1,7 +1,6 @@
 module github.com/pczerkas/kube-apps-httpcache
 
 go 1.22.5
-toolchain go1.22.5
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
