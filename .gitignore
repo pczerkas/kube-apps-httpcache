@@ -1,2 +1,5 @@
+/.gitlab-ci-local
 /.vscode
-dist
+/build
+/debug
+/dist
